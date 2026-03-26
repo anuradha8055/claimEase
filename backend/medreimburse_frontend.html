@@ -1,0 +1,1076 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>MedReimburse — Maharashtra Government</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      fontFamily: { sora: ['Sora','sans-serif'], space: ['Space Grotesk','sans-serif'], mono: ['JetBrains Mono','monospace'] },
+      colors: {
+        navy:  { 50:'#eef2ff',100:'#e0e7ff',200:'#c7d2fe',300:'#a5b4fc',400:'#818cf8',500:'#6366f1',600:'#4f46e5',700:'#4338ca',800:'#1e1b4b',900:'#0d0b2e',950:'#070621' },
+        saffron:{ 50:'#fff7ed',100:'#ffedd5',200:'#fed7aa',300:'#fdba74',400:'#fb923c',500:'#f97316',600:'#ea580c',700:'#c2410c',800:'#9a3412',900:'#7c2d12' },
+        emerald:{ 50:'#ecfdf5',100:'#d1fae5',200:'#a7f3d0',300:'#6ee7b7',400:'#34d399',500:'#10b981',600:'#059669',700:'#047857',800:'#065f46',900:'#064e3b' },
+        rose:   { 50:'#fff1f2',100:'#ffe4e6',200:'#fecdd3',300:'#fda4af',400:'#fb7185',500:'#f43f5e',600:'#e11d48',700:'#be123c',800:'#9f1239',900:'#881337' },
+        amber:  { 50:'#fffbeb',100:'#fef3c7',200:'#fde68a',300:'#fcd34d',400:'#fbbf24',500:'#f59e0b',600:'#d97706' },
+      },
+      animation: {
+        'fade-in':    'fadeIn 0.5s ease forwards',
+        'slide-up':   'slideUp 0.4s ease forwards',
+        'slide-right':'slideRight 0.4s ease forwards',
+        'pulse-soft': 'pulseSoft 2s ease-in-out infinite',
+        'shimmer':    'shimmer 1.5s ease-in-out infinite',
+        'spin-slow':  'spin 3s linear infinite',
+      },
+      keyframes: {
+        fadeIn:    { from:{opacity:0}, to:{opacity:1} },
+        slideUp:   { from:{opacity:0,transform:'translateY(20px)'}, to:{opacity:1,transform:'translateY(0)'} },
+        slideRight:{ from:{opacity:0,transform:'translateX(-20px)'}, to:{opacity:1,transform:'translateX(0)'} },
+        pulseSoft: { '0%,100%':{opacity:1}, '50%':{opacity:0.6} },
+        shimmer:   { '0%':{backgroundPosition:'-200% 0'}, '100%':{backgroundPosition:'200% 0'} },
+      }
+    }
+  }
+}
+</script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Sora',sans-serif;background:#070621;color:#e2e8f0;min-height:100vh;overflow-x:hidden}
+::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:#0d0b2e}::-webkit-scrollbar-thumb{background:#4338ca;border-radius:3px}
+.page{display:none;animation:fadeIn 0.4s ease}.page.active{display:block}
+.glass{background:rgba(255,255,255,0.04);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.08)}
+.glass-strong{background:rgba(255,255,255,0.07);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,0.12)}
+.gradient-text{background:linear-gradient(135deg,#818cf8,#fb923c,#34d399);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.btn-primary{background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;border:none;padding:12px 28px;border-radius:12px;font-family:'Sora',sans-serif;font-weight:600;font-size:15px;cursor:pointer;transition:all 0.3s ease;position:relative;overflow:hidden}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(99,102,241,0.4)}
+.btn-primary:active{transform:translateY(0)}
+.btn-primary::after{content:'';position:absolute;inset:0;background:linear-gradient(135deg,#6366f1,#a855f7);opacity:0;transition:opacity 0.3s}
+.btn-primary:hover::after{opacity:1}
+.btn-primary span{position:relative;z-index:1}
+.btn-success{background:linear-gradient(135deg,#059669,#047857);color:#fff;padding:10px 22px;border-radius:10px;font-family:'Sora',sans-serif;font-weight:600;font-size:14px;cursor:pointer;border:none;transition:all 0.3s ease}
+.btn-success:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(16,185,129,0.3)}
+.btn-danger{background:linear-gradient(135deg,#e11d48,#be123c);color:#fff;padding:10px 22px;border-radius:10px;font-family:'Sora',sans-serif;font-weight:600;font-size:14px;cursor:pointer;border:none;transition:all 0.3s ease}
+.btn-danger:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(225,29,72,0.3)}
+.btn-warning{background:linear-gradient(135deg,#d97706,#b45309);color:#fff;padding:10px 22px;border-radius:10px;font-family:'Sora',sans-serif;font-weight:600;font-size:14px;cursor:pointer;border:none;transition:all 0.3s ease}
+.btn-warning:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(217,119,6,0.3)}
+.btn-outline{background:transparent;border:1px solid rgba(255,255,255,0.2);color:#e2e8f0;padding:10px 22px;border-radius:10px;font-family:'Sora',sans-serif;font-weight:500;font-size:14px;cursor:pointer;transition:all 0.3s ease}
+.btn-outline:hover{background:rgba(255,255,255,0.08);border-color:rgba(255,255,255,0.4)}
+.input-field{width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:14px 18px;color:#e2e8f0;font-family:'Sora',sans-serif;font-size:15px;transition:all 0.3s ease;outline:none}
+.input-field:focus{border-color:#6366f1;background:rgba(99,102,241,0.08);box-shadow:0 0 0 3px rgba(99,102,241,0.15)}
+.input-field::placeholder{color:rgba(226,232,240,0.3)}
+.input-field option{background:#1e1b4b;color:#e2e8f0}
+.card{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:24px;transition:all 0.3s ease}
+.card:hover{background:rgba(255,255,255,0.07);border-color:rgba(255,255,255,0.15);transform:translateY(-2px)}
+.status-badge{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:20px;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px}
+.status-draft{background:rgba(148,163,184,0.15);color:#94a3b8;border:1px solid rgba(148,163,184,0.2)}
+.status-submitted{background:rgba(99,102,241,0.15);color:#818cf8;border:1px solid rgba(99,102,241,0.2)}
+.status-scrutiny{background:rgba(251,191,36,0.15);color:#fbbf24;border:1px solid rgba(251,191,36,0.2)}
+.status-medical{background:rgba(52,211,153,0.15);color:#34d399;border:1px solid rgba(52,211,153,0.2)}
+.status-finance{background:rgba(96,165,250,0.15);color:#60a5fa;border:1px solid rgba(96,165,250,0.2)}
+.status-ddo{background:rgba(167,139,250,0.15);color:#a78bfa;border:1px solid rgba(167,139,250,0.2)}
+.status-paid{background:rgba(16,185,129,0.15);color:#10b981;border:1px solid rgba(16,185,129,0.2)}
+.status-query{background:rgba(251,146,60,0.15);color:#fb923c;border:1px solid rgba(251,146,60,0.2)}
+.status-rejected{background:rgba(244,63,94,0.15);color:#f43f5e;border:1px solid rgba(244,63,94,0.2)}
+.sidebar{width:260px;min-height:100vh;background:rgba(13,11,46,0.95);backdrop-filter:blur(20px);border-right:1px solid rgba(255,255,255,0.06);position:fixed;left:0;top:0;z-index:100;transition:transform 0.3s ease}
+.nav-item{display:flex;align-items:center;gap:12px;padding:13px 20px;border-radius:12px;color:rgba(226,232,240,0.6);font-size:14px;font-weight:500;cursor:pointer;transition:all 0.25s ease;margin:2px 8px;text-decoration:none}
+.nav-item:hover{background:rgba(99,102,241,0.12);color:#e2e8f0}
+.nav-item.active{background:linear-gradient(135deg,rgba(79,70,229,0.3),rgba(124,58,237,0.2));color:#818cf8;border:1px solid rgba(99,102,241,0.25)}
+.nav-item svg{flex-shrink:0;width:18px;height:18px}
+.main-content{margin-left:260px;min-height:100vh;padding:32px}
+.toast{position:fixed;top:20px;right:20px;z-index:9999;padding:14px 20px;border-radius:12px;font-size:14px;font-weight:500;display:flex;align-items:center;gap:10px;animation:slideUp 0.3s ease;max-width:380px}
+.toast-success{background:linear-gradient(135deg,#059669,#047857);color:#fff;box-shadow:0 10px 30px rgba(5,150,105,0.3)}
+.toast-error{background:linear-gradient(135deg,#e11d48,#be123c);color:#fff;box-shadow:0 10px 30px rgba(225,29,72,0.3)}
+.toast-info{background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;box-shadow:0 10px 30px rgba(99,102,241,0.3)}
+.loading-spinner{width:40px;height:40px;border:3px solid rgba(99,102,241,0.2);border-top-color:#6366f1;border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto}
+.progress-step{display:flex;align-items:center;gap:0}
+.step-dot{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;transition:all 0.3s ease}
+.step-line{flex:1;height:2px;transition:all 0.3s ease}
+.modal-overlay{position:fixed;inset:0;background:rgba(7,6,33,0.8);backdrop-filter:blur(8px);z-index:1000;display:none;align-items:center;justify-content:center;animation:fadeIn 0.2s ease}
+.modal-overlay.open{display:flex}
+.modal{background:#0d0b2e;border:1px solid rgba(255,255,255,0.12);border-radius:20px;padding:32px;width:90%;max-width:560px;max-height:90vh;overflow-y:auto;animation:slideUp 0.3s ease}
+.stat-card{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:24px;position:relative;overflow:hidden}
+.stat-card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(99,102,241,0.06),transparent);pointer-events:none}
+.table-row{display:grid;padding:16px 20px;border-bottom:1px solid rgba(255,255,255,0.05);transition:background 0.2s ease;align-items:center}
+.table-row:hover{background:rgba(255,255,255,0.03)}
+.tag{display:inline-block;padding:3px 10px;border-radius:6px;font-size:11px;font-weight:600;letter-spacing:0.4px;text-transform:uppercase}
+@keyframes spin{to{transform:rotate(360deg)}}
+.orb{position:fixed;border-radius:50%;filter:blur(80px);opacity:0.15;pointer-events:none;z-index:0}
+.workflow-track{display:flex;align-items:center;padding:20px 0;overflow-x:auto;gap:0}
+.wf-step{display:flex;flex-direction:column;align-items:center;gap:8px;min-width:100px}
+.wf-dot{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;transition:all 0.3s}
+.wf-line{height:2px;flex:1;min-width:30px;transition:background 0.3s}
+.wf-connector{display:flex;align-items:center;flex:1;min-width:30px}
+textarea.input-field{resize:vertical;min-height:90px}
+</style>
+</head>
+<body>
+
+<!-- Background orbs -->
+<div class="orb" style="width:600px;height:600px;background:#4f46e5;top:-200px;right:-100px"></div>
+<div class="orb" style="width:400px;height:400px;background:#7c3aed;bottom:100px;left:-100px"></div>
+<div class="orb" style="width:300px;height:300px;background:#059669;bottom:-100px;right:200px"></div>
+
+<!-- Toast container -->
+<div id="toastContainer"></div>
+
+<!-- ===================== LOGIN PAGE ===================== -->
+<div id="loginPage" class="page active" style="min-height:100vh;display:flex;align-items:center;justify-content:center;position:relative;z-index:1">
+  <div style="width:100%;max-width:460px;padding:20px;animation:slideUp 0.5s ease">
+    <div style="text-align:center;margin-bottom:40px">
+      <div style="width:64px;height:64px;background:linear-gradient(135deg,#4f46e5,#7c3aed);border-radius:18px;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;box-shadow:0 12px 40px rgba(99,102,241,0.4)">
+        <svg width="32" height="32" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      </div>
+      <h1 style="font-family:'Space Grotesk',sans-serif;font-size:28px;font-weight:700;margin-bottom:6px" class="gradient-text">MedReimburse</h1>
+      <p style="color:rgba(226,232,240,0.5);font-size:14px">Maharashtra Government Medical Reimbursement</p>
+    </div>
+    <div class="glass-strong" style="border-radius:20px;padding:36px">
+      <h2 style="font-size:20px;font-weight:600;margin-bottom:24px;color:#e2e8f0">Sign In</h2>
+      <div style="display:flex;flex-direction:column;gap:16px">
+        <div>
+          <label style="font-size:13px;color:rgba(226,232,240,0.6);margin-bottom:8px;display:block">Email Address</label>
+          <input id="loginEmail" type="email" class="input-field" placeholder="your.email@gov.in"/>
+        </div>
+        <div>
+          <label style="font-size:13px;color:rgba(226,232,240,0.6);margin-bottom:8px;display:block">Password</label>
+          <input id="loginPassword" type="password" class="input-field" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"/>
+        </div>
+        <button class="btn-primary" style="width:100%;margin-top:8px" onclick="doLogin()">
+          <span style="display:flex;align-items:center;justify-content:center;gap:8px">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+            Sign In
+          </span>
+        </button>
+      </div>
+      <div style="margin-top:24px;padding-top:20px;border-top:1px solid rgba(255,255,255,0.08)">
+        <p style="font-size:12px;color:rgba(226,232,240,0.4);margin-bottom:12px;text-align:center">Demo Accounts</p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <button onclick="setDemo('employee@gov.in','password123')" style="padding:8px;background:rgba(99,102,241,0.1);border:1px solid rgba(99,102,241,0.2);border-radius:8px;color:#818cf8;font-size:11px;cursor:pointer;font-family:'Sora',sans-serif">👤 Employee</button>
+          <button onclick="setDemo('scrutiny@gov.in','password123')" style="padding:8px;background:rgba(251,191,36,0.1);border:1px solid rgba(251,191,36,0.2);border-radius:8px;color:#fbbf24;font-size:11px;cursor:pointer;font-family:'Sora',sans-serif">🔍 Scrutiny</button>
+          <button onclick="setDemo('medical@gov.in','password123')" style="padding:8px;background:rgba(52,211,153,0.1);border:1px solid rgba(52,211,153,0.2);border-radius:8px;color:#34d399;font-size:11px;cursor:pointer;font-family:'Sora',sans-serif">🏥 Medical</button>
+          <button onclick="setDemo('finance@gov.in','password123')" style="padding:8px;background:rgba(96,165,250,0.1);border:1px solid rgba(96,165,250,0.2);border-radius:8px;color:#60a5fa;font-size:11px;cursor:pointer;font-family:'Sora',sans-serif">💰 Finance</button>
+          <button onclick="setDemo('ddo@gov.in','password123')" style="grid-column:1/-1;padding:8px;background:rgba(167,139,250,0.1);border:1px solid rgba(167,139,250,0.2);border-radius:8px;color:#a78bfa;font-size:11px;cursor:pointer;font-family:'Sora',sans-serif">✍️ DDO</button>
+        </div>
+      </div>
+    </div>
+    <p style="text-align:center;font-size:12px;color:rgba(226,232,240,0.3);margin-top:20px">Maharashtra State Government · Secure Portal</p>
+  </div>
+</div>
+
+<!-- ===================== APP (sidebar + content) ===================== -->
+<div id="appShell" style="display:none">
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div style="padding:24px 20px;border-bottom:1px solid rgba(255,255,255,0.06)">
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="width:36px;height:36px;background:linear-gradient(135deg,#4f46e5,#7c3aed);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+          <svg width="18" height="18" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+        </div>
+        <div>
+          <div style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:15px;color:#e2e8f0">MedReimburse</div>
+          <div style="font-size:11px;color:rgba(226,232,240,0.4)" id="sidebarRole">—</div>
+        </div>
+      </div>
+    </div>
+    <div id="sidebarNav" style="padding:12px 0;flex:1"></div>
+    <div style="padding:16px;border-top:1px solid rgba(255,255,255,0.06)">
+      <div style="display:flex;align-items:center;gap:10px;padding:12px;border-radius:12px;background:rgba(255,255,255,0.04);margin-bottom:10px">
+        <div id="sidebarAvatar" style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#4f46e5,#7c3aed);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0">?</div>
+        <div style="overflow:hidden">
+          <div id="sidebarEmail" style="font-size:12px;color:#e2e8f0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">—</div>
+        </div>
+      </div>
+      <button onclick="doLogout()" style="width:100%;padding:10px;background:rgba(244,63,94,0.1);border:1px solid rgba(244,63,94,0.2);border-radius:10px;color:#f43f5e;font-size:13px;font-weight:500;cursor:pointer;font-family:'Sora',sans-serif;transition:all 0.2s" onmouseover="this.style.background='rgba(244,63,94,0.2)'" onmouseout="this.style.background='rgba(244,63,94,0.1)'">
+        Sign Out
+      </button>
+    </div>
+  </div>
+
+  <!-- Main content area -->
+  <div class="main-content" style="position:relative;z-index:1">
+
+    <!-- EMPLOYEE DASHBOARD -->
+    <div id="empDashboard" class="page" style="display:none">
+      <div style="animation:slideUp 0.4s ease">
+        <div style="display:flex;align-items:center;justify-content:between;margin-bottom:32px;flex-wrap:wrap;gap:16px">
+          <div>
+            <h1 style="font-family:'Space Grotesk',sans-serif;font-size:26px;font-weight:700;color:#e2e8f0">My Dashboard</h1>
+            <p style="color:rgba(226,232,240,0.5);font-size:14px;margin-top:4px">Track your medical reimbursement claims</p>
+          </div>
+          <button class="btn-primary" onclick="showPage('newClaim')"><span>+ New Claim</span></button>
+        </div>
+        <!-- Stats -->
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:32px" id="empStats">
+          <div class="stat-card"><div style="font-size:28px;font-weight:700;color:#818cf8" id="statTotal">—</div><div style="font-size:13px;color:rgba(226,232,240,0.5);margin-top:4px">Total Claims</div></div>
+          <div class="stat-card"><div style="font-size:28px;font-weight:700;color:#fbbf24" id="statPending">—</div><div style="font-size:13px;color:rgba(226,232,240,0.5);margin-top:4px">In Progress</div></div>
+          <div class="stat-card"><div style="font-size:28px;font-weight:700;color:#34d399" id="statPaid">—</div><div style="font-size:13px;color:rgba(226,232,240,0.5);margin-top:4px">Paid</div></div>
+          <div class="stat-card"><div style="font-size:28px;font-weight:700;color:#f43f5e" id="statQuery">—</div><div style="font-size:13px;color:rgba(226,232,240,0.5);margin-top:4px">Queries Pending</div></div>
+        </div>
+        <!-- Claims list -->
+        <div class="glass" style="border-radius:20px;overflow:hidden">
+          <div style="padding:20px 24px;border-bottom:1px solid rgba(255,255,255,0.06);display:flex;align-items:center;justify-content:space-between">
+            <h3 style="font-weight:600;font-size:16px">My Claims</h3>
+            <button onclick="loadMyClaims()" style="font-size:12px;color:#818cf8;background:none;border:none;cursor:pointer;font-family:'Sora',sans-serif">↻ Refresh</button>
+          </div>
+          <div id="empClaimsList" style="padding:8px 0"><div style="padding:40px;text-align:center;color:rgba(226,232,240,0.3)"><div class="loading-spinner"></div></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- NEW CLAIM PAGE -->
+    <div id="newClaim" class="page" style="display:none">
+      <div style="animation:slideUp 0.4s ease;max-width:700px">
+        <div style="display:flex;align-items:center;gap:16px;margin-bottom:32px">
+          <button onclick="showPage('empDashboard')" style="width:40px;height:40px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:10px;color:#e2e8f0;cursor:pointer;display:flex;align-items:center;justify-content:center">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+          </button>
+          <div>
+            <h1 style="font-family:'Space Grotesk',sans-serif;font-size:24px;font-weight:700">New Reimbursement Claim</h1>
+            <p style="color:rgba(226,232,240,0.5);font-size:13px;margin-top:2px">Fill all details carefully</p>
+          </div>
+        </div>
+        <div class="glass-strong" style="border-radius:20px;padding:32px">
+          <div style="display:grid;gap:20px">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+              <div>
+                <label style="font-size:13px;color:rgba(226,232,240,0.6);margin-bottom:8px;display:block">Hospital ID *</label>
+                <input id="ncHospital" type="number" class="input-field" placeholder="e.g. 1"/>
+              </div>
+              <div>
+                <label style="font-size:13px;color:rgba(226,232,240,0.6);margin-bottom:8px;display:block">Diagnosis</label>
+                <input id="ncDiagnosis" type="text" class="input-field" placeholder="e.g. Appendicitis"/>
+              </div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+              <div>
+                <label style="font-size:13px;color:rgba(226,232,240,0.6);margin-bottom:8px;display:block">Admission Date *</label>
+                <input id="ncAdmission" type="date" class="input-field"/>
+              </div>
+              <div>
+                <label style="font-size:13px;color:rgba(226,232,240,0.6);margin-bottom:8px;display:block">Discharge Date *</label>
+                <input id="ncDischarge" type="date" class="input-field"/>
+              </div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+              <div>
+                <label style="font-size:13px;color:rgba(226,232,240,0.6);margin-bottom:8px;display:block">Total Bill Amount (₹) *</label>
+                <input id="ncTotal" type="number" step="0.01" class="input-field" placeholder="e.g. 45000.00"/>
+              </div>
+              <div>
+                <label style="font-size:13px;color:rgba(226,232,240,0.6);margin-bottom:8px;display:block">Claimed Amount (₹) *</label>
+                <input id="ncClaimed" type="number" step="0.01" class="input-field" placeholder="e.g. 40000.00"/>
+              </div>
+            </div>
+            <div style="display:flex;gap:12px;margin-top:8px">
+              <button class="btn-primary" onclick="submitNewClaim(false)" style="flex:1"><span>💾 Save as Draft</span></button>
+              <button class="btn-success" onclick="submitNewClaim(true)" style="flex:1">📤 Submit Claim</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CLAIM DETAIL PAGE -->
+    <div id="claimDetail" class="page" style="display:none">
+      <div style="animation:slideUp 0.4s ease" id="claimDetailContent"></div>
+    </div>
+
+    <!-- QUERIES PAGE (employee) -->
+    <div id="myQueries" class="page" style="display:none">
+      <div style="animation:slideUp 0.4s ease">
+        <h1 style="font-family:'Space Grotesk',sans-serif;font-size:24px;font-weight:700;margin-bottom:8px">Pending Queries</h1>
+        <p style="color:rgba(226,232,240,0.5);font-size:14px;margin-bottom:28px">Queries raised by officers on your claims</p>
+        <div class="glass" style="border-radius:20px;overflow:hidden" id="queriesList">
+          <div style="padding:40px;text-align:center"><div class="loading-spinner"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- UPLOAD DOC PAGE -->
+    <div id="uploadDoc" class="page" style="display:none">
+      <div style="animation:slideUp 0.4s ease;max-width:560px">
+        <div style="display:flex;align-items:center;gap:16px;margin-bottom:32px">
+          <button onclick="history.back?showPage('empDashboard'):showPage('empDashboard')" onclick="showPage('empDashboard')" style="width:40px;height:40px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:10px;color:#e2e8f0;cursor:pointer;display:flex;align-items:center;justify-content:center"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></button>
+          <h1 style="font-family:'Space Grotesk',sans-serif;font-size:24px;font-weight:700">Upload Document</h1>
+        </div>
+        <div class="glass-strong" style="border-radius:20px;padding:32px;display:flex;flex-direction:column;gap:20px">
+          <div>
+            <label style="font-size:13px;color:rgba(226,232,240,0.6);margin-bottom:8px;display:block">Claim ID *</label>
+            <input id="udClaimId" type="number" class="input-field" placeholder="Enter claim ID"/>
+          </div>
+          <div>
+            <label style="font-size:13px;color:rgba(226,232,240,0.6);margin-bottom:8px;display:block">Document Type *</label>
+            <select id="udDocType" class="input-field">
+              <option value="1">Hospital Bill</option>
+              <option value="2">Discharge Summary</option>
+              <option value="3">Prescription</option>
+              <option value="4">Lab Reports</option>
+              <option value="5">Other</option>
+            </select>
+          </div>
+          <div>
+            <label style="font-size:13px;color:rgba(226,232,240,0.6);margin-bottom:8px;display:block">File (PDF/JPG/PNG, max 10MB)</label>
+            <div id="dropzone" style="border:2px dashed rgba(99,102,241,0.3);border-radius:12px;padding:32px;text-align:center;cursor:pointer;transition:all 0.3s;background:rgba(99,102,241,0.03)" ondragover="event.preventDefault();this.style.borderColor='#6366f1';this.style.background='rgba(99,102,241,0.08)'" ondragleave="this.style.borderColor='rgba(99,102,241,0.3)';this.style.background='rgba(99,102,241,0.03)'" ondrop="handleDrop(event)" onclick="document.getElementById('udFile').click()">
+              <svg width="32" height="32" fill="none" stroke="rgba(99,102,241,0.6)" stroke-width="1.5" viewBox="0 0 24 24" style="margin:0 auto 10px"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              <p style="font-size:14px;color:rgba(226,232,240,0.5)" id="dropzoneText">Drag & drop or click to browse</p>
+            </div>
+            <input id="udFile" type="file" accept=".pdf,.jpg,.jpeg,.png" style="display:none" onchange="onFileSelect(event)"/>
+          </div>
+          <button class="btn-primary" onclick="uploadDocument()" style="width:100%"><span>🔒 Upload & Hash Document</span></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== OFFICER QUEUE (shared) ===== -->
+    <div id="officerQueue" class="page" style="display:none">
+      <div style="animation:slideUp 0.4s ease">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;flex-wrap:wrap;gap:12px">
+          <div>
+            <h1 style="font-family:'Space Grotesk',sans-serif;font-size:24px;font-weight:700" id="queueTitle">Pending Queue</h1>
+            <p style="color:rgba(226,232,240,0.5);font-size:13px;margin-top:4px" id="queueSubtitle">Claims awaiting your action</p>
+          </div>
+          <button onclick="loadOfficerQueue()" style="padding:10px 16px;background:rgba(99,102,241,0.1);border:1px solid rgba(99,102,241,0.2);border-radius:10px;color:#818cf8;font-size:13px;cursor:pointer;font-family:'Sora',sans-serif">↻ Refresh</button>
+        </div>
+        <div class="glass" style="border-radius:20px;overflow:hidden" id="officerQueueList">
+          <div style="padding:40px;text-align:center"><div class="loading-spinner"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CLAIM REVIEW (officer) -->
+    <div id="claimReview" class="page" style="display:none">
+      <div style="animation:slideUp 0.4s ease" id="claimReviewContent"></div>
+    </div>
+
+    <!-- DDO SANCTIONED -->
+    <div id="ddoSanctioned" class="page" style="display:none">
+      <div style="animation:slideUp 0.4s ease">
+        <h1 style="font-family:'Space Grotesk',sans-serif;font-size:24px;font-weight:700;margin-bottom:8px">Sanctioned Claims</h1>
+        <p style="color:rgba(226,232,240,0.5);font-size:14px;margin-bottom:28px">All processed and paid claims</p>
+        <div class="glass" style="border-radius:20px;overflow:hidden" id="ddoSanctionedList">
+          <div style="padding:40px;text-align:center"><div class="loading-spinner"></div></div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /main-content -->
+</div><!-- /appShell -->
+
+<!-- ========== MODALS ========== -->
+
+<!-- Query modal -->
+<div class="modal-overlay" id="queryModal">
+  <div class="modal">
+    <h3 style="font-size:18px;font-weight:700;margin-bottom:6px;color:#e2e8f0">Raise a Query</h3>
+    <p style="font-size:13px;color:rgba(226,232,240,0.5);margin-bottom:20px">Employee will be notified instantly</p>
+    <input type="hidden" id="queryClaimId"/>
+    <label style="font-size:13px;color:rgba(226,232,240,0.6);margin-bottom:8px;display:block">Query Message *</label>
+    <textarea id="queryMessage" class="input-field" placeholder="Describe what's missing or needs clarification..."></textarea>
+    <div style="display:flex;gap:12px;margin-top:20px">
+      <button class="btn-warning" onclick="submitQuery()" style="flex:1">Submit Query</button>
+      <button class="btn-outline" onclick="closeModal('queryModal')" style="flex:1">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Reject modal -->
+<div class="modal-overlay" id="rejectModal">
+  <div class="modal">
+    <h3 style="font-size:18px;font-weight:700;margin-bottom:6px;color:#f43f5e">Reject Claim</h3>
+    <p style="font-size:13px;color:rgba(226,232,240,0.5);margin-bottom:20px">This action cannot be undone.</p>
+    <input type="hidden" id="rejectClaimId"/>
+    <div style="display:flex;gap:12px;margin-top:20px">
+      <button class="btn-danger" onclick="confirmReject()" style="flex:1">Confirm Reject</button>
+      <button class="btn-outline" onclick="closeModal('rejectModal')" style="flex:1">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Finance override modal -->
+<div class="modal-overlay" id="financeModal">
+  <div class="modal">
+    <h3 style="font-size:18px;font-weight:700;margin-bottom:6px;color:#e2e8f0">Approve Claim</h3>
+    <p style="font-size:13px;color:rgba(226,232,240,0.5);margin-bottom:20px">Override amount is optional. Leave blank to use system-calculated amount.</p>
+    <input type="hidden" id="financeClaimId"/>
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <div style="background:rgba(96,165,250,0.08);border:1px solid rgba(96,165,250,0.2);border-radius:10px;padding:14px">
+        <div style="font-size:12px;color:rgba(226,232,240,0.5);margin-bottom:4px">System Calculated Amount</div>
+        <div style="font-size:20px;font-weight:700;color:#60a5fa" id="financeCalculated">—</div>
+        <div id="financeBreakdown" style="margin-top:8px;font-size:12px;color:rgba(226,232,240,0.5)"></div>
+      </div>
+      <div>
+        <label style="font-size:13px;color:rgba(226,232,240,0.6);margin-bottom:8px;display:block">Override Amount (₹) — Optional</label>
+        <input id="financeOverrideAmount" type="number" step="0.01" class="input-field" placeholder="Leave blank to use calculated amount"/>
+      </div>
+      <div>
+        <label style="font-size:13px;color:rgba(226,232,240,0.6);margin-bottom:8px;display:block">Override Reason (required if overriding)</label>
+        <textarea id="financeOverrideReason" class="input-field" placeholder="State reason for override..." style="min-height:70px"></textarea>
+      </div>
+    </div>
+    <div style="display:flex;gap:12px;margin-top:20px">
+      <button class="btn-success" onclick="confirmFinanceApprove()" style="flex:1">✓ Approve</button>
+      <button class="btn-outline" onclick="closeModal('financeModal')" style="flex:1">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Respond to query modal -->
+<div class="modal-overlay" id="respondModal">
+  <div class="modal">
+    <h3 style="font-size:18px;font-weight:700;margin-bottom:6px">Respond to Query</h3>
+    <div id="respondQueryText" style="background:rgba(251,146,60,0.08);border:1px solid rgba(251,146,60,0.2);border-radius:10px;padding:14px;margin-bottom:20px;font-size:14px;color:rgba(226,232,240,0.8)"></div>
+    <input type="hidden" id="respondQueryId"/>
+    <label style="font-size:13px;color:rgba(226,232,240,0.6);margin-bottom:8px;display:block">Your Response *</label>
+    <textarea id="respondText" class="input-field" placeholder="Explain and provide the requested information..."></textarea>
+    <div style="display:flex;gap:12px;margin-top:20px">
+      <button class="btn-primary" onclick="submitQueryResponse()" style="flex:1">Send Response</button>
+      <button class="btn-outline" onclick="closeModal('respondModal')" style="flex:1">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ================================================================
+// STATE
+// ================================================================
+const STATE = {
+  token: null,
+  role: null,
+  email: null,
+  currentClaimId: null,
+  currentOfficerRole: null,
+};
+const API = 'http://localhost:8000';
+
+// ================================================================
+// UTILITIES
+// ================================================================
+function showToast(msg, type='info') {
+  const el = document.createElement('div');
+  el.className = `toast toast-${type}`;
+  el.innerHTML = `<span>${type==='success'?'✓':type==='error'?'✕':'ℹ'}</span><span>${msg}</span>`;
+  document.getElementById('toastContainer').appendChild(el);
+  setTimeout(()=>el.remove(), 4000);
+}
+
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p=>{ p.style.display='none'; p.classList.remove('active'); });
+  const p = document.getElementById(id);
+  if(p){ p.style.display='block'; p.classList.add('active'); }
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  const navEl = document.querySelector(`[data-page="${id}"]`);
+  if(navEl) navEl.classList.add('active');
+}
+
+function openModal(id){ document.getElementById(id).classList.add('open'); }
+function closeModal(id){ document.getElementById(id).classList.remove('open'); }
+
+async function apiFetch(path, method='GET', body=null, isForm=false) {
+  const opts = { method, headers: {} };
+  if(STATE.token) opts.headers['Authorization'] = `Bearer ${STATE.token}`;
+  if(body && !isForm){ opts.headers['Content-Type']='application/json'; opts.body=JSON.stringify(body); }
+  if(body && isForm){ opts.body=body; }
+  const res = await fetch(API+path, opts);
+  if(res.status===401){ showToast('Session expired. Please log in again.','error'); doLogout(); return null; }
+  const data = await res.json().catch(()=>null);
+  if(!res.ok){ showToast(data?.detail||'Request failed','error'); return null; }
+  return data;
+}
+
+function formatDate(d){ if(!d) return '—'; return new Date(d).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}); }
+function formatCurrency(n){ if(n==null) return '—'; return '₹'+parseFloat(n).toLocaleString('en-IN',{minimumFractionDigits:2}); }
+
+function getStatusBadge(status) {
+  const map = {
+    DRAFT:'draft',SUBMITTED:'submitted',SCRUTINY_APPROVED:'scrutiny',
+    MEDICAL_APPROVED:'medical',FINANCE_APPROVED:'finance',
+    DDO_SANCTIONED:'ddo',PAYMENT_PROCESSED:'paid',
+    QUERY_RAISED:'query',REJECTED:'rejected'
+  };
+  const cls = map[status]||'draft';
+  const labels = {DRAFT:'Draft',SUBMITTED:'Submitted',SCRUTINY_APPROVED:'Scrutiny ✓',MEDICAL_APPROVED:'Medical ✓',FINANCE_APPROVED:'Finance ✓',DDO_SANCTIONED:'DDO ✓',PAYMENT_PROCESSED:'Paid',QUERY_RAISED:'Query Raised',REJECTED:'Rejected'};
+  return `<span class="status-badge status-${cls}">${labels[status]||status}</span>`;
+}
+
+// ================================================================
+// AUTH
+// ================================================================
+function setDemo(e,p){ document.getElementById('loginEmail').value=e; document.getElementById('loginPassword').value=p; }
+
+async function doLogin(){
+  const email = document.getElementById('loginEmail').value.trim();
+  const password = document.getElementById('loginPassword').value;
+  if(!email||!password){ showToast('Please fill all fields','error'); return; }
+  const data = await apiFetch('/auth/login','POST',{email,password});
+  if(!data) return;
+  STATE.token = data.access_token;
+  STATE.email = email;
+  // Decode role from JWT payload
+  try {
+    const payload = JSON.parse(atob(data.access_token.split('.')[1].replace(/-/g,'+').replace(/_/g,'/')));
+    STATE.role = payload.role;
+  } catch(e){ STATE.role='EMPLOYEE'; }
+  initApp();
+}
+
+function doLogout(){
+  apiFetch('/auth/logout','POST');
+  STATE.token=null; STATE.role=null; STATE.email=null;
+  document.getElementById('appShell').style.display='none';
+  document.querySelectorAll('.page').forEach(p=>{ p.style.display='none'; p.classList.remove('active'); });
+  document.getElementById('loginPage').style.display='flex';
+  document.getElementById('loginPage').classList.add('active');
+}
+
+// ================================================================
+// APP INIT & SIDEBAR
+// ================================================================
+function initApp(){
+  document.getElementById('loginPage').style.display='none';
+  document.getElementById('loginPage').classList.remove('active');
+  document.getElementById('appShell').style.display='block';
+
+  // Sidebar
+  document.getElementById('sidebarEmail').textContent = STATE.email;
+  document.getElementById('sidebarAvatar').textContent = STATE.email[0].toUpperCase();
+  document.getElementById('sidebarRole').textContent = STATE.role.replace(/_/g,' ');
+
+  // Build nav based on role
+  const navEl = document.getElementById('sidebarNav');
+  let navItems = [];
+
+  if(STATE.role === 'EMPLOYEE'){
+    navItems = [
+      {id:'empDashboard',icon:svgHome(),label:'Dashboard'},
+      {id:'newClaim',icon:svgPlus(),label:'New Claim'},
+      {id:'uploadDoc',icon:svgUpload(),label:'Upload Document'},
+      {id:'myQueries',icon:svgMsg(),label:'Queries',badge:true},
+    ];
+  } else if(STATE.role === 'SCRUTINY_OFFICER'){
+    navItems = [
+      {id:'officerQueue',icon:svgList(),label:'Claim Queue'},
+    ];
+  } else if(STATE.role === 'MEDICAL_OFFICER'){
+    navItems = [
+      {id:'officerQueue',icon:svgList(),label:'Medical Queue'},
+    ];
+  } else if(STATE.role === 'FINANCE_OFFICER'){
+    navItems = [
+      {id:'officerQueue',icon:svgList(),label:'Finance Queue'},
+    ];
+  } else if(STATE.role === 'DDO'){
+    navItems = [
+      {id:'officerQueue',icon:svgList(),label:'Sanction Queue'},
+      {id:'ddoSanctioned',icon:svgCheck(),label:'Sanctioned Claims'},
+    ];
+  }
+
+  navEl.innerHTML = navItems.map(n=>`
+    <a class="nav-item" data-page="${n.id}" onclick="navTo('${n.id}')">
+      ${n.icon}<span>${n.label}</span>
+      ${n.badge?`<span id="queryBadge" style="margin-left:auto;background:#f43f5e;color:#fff;border-radius:20px;font-size:10px;font-weight:700;padding:2px 7px;min-width:18px;text-align:center;display:none">0</span>`:''}
+    </a>`).join('');
+
+  // Default page
+  if(STATE.role==='EMPLOYEE'){
+    navTo('empDashboard');
+  } else {
+    STATE.currentOfficerRole = STATE.role;
+    navTo('officerQueue');
+  }
+}
+
+function navTo(pageId){
+  showPage(pageId);
+  if(pageId==='empDashboard') loadMyClaims();
+  if(pageId==='myQueries') loadMyQueries();
+  if(pageId==='officerQueue') loadOfficerQueue();
+  if(pageId==='ddoSanctioned') loadDDOSanctioned();
+}
+
+// SVG icons
+function svgHome(){ return `<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>`; }
+function svgPlus(){ return `<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>`; }
+function svgUpload(){ return `<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>`; }
+function svgMsg(){ return `<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>`; }
+function svgList(){ return `<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>`; }
+function svgCheck(){ return `<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>`; }
+
+// ================================================================
+// EMPLOYEE: CLAIMS
+// ================================================================
+async function loadMyClaims(){
+  const data = await apiFetch('/claims/my');
+  if(!data) return;
+  // Update stats
+  document.getElementById('statTotal').textContent = data.length;
+  document.getElementById('statPending').textContent = data.filter(c=>!['PAYMENT_PROCESSED','REJECTED','DRAFT'].includes(c.claim_status)).length;
+  document.getElementById('statPaid').textContent = data.filter(c=>c.claim_status==='PAYMENT_PROCESSED').length;
+  document.getElementById('statQuery').textContent = data.filter(c=>c.claim_status==='QUERY_RAISED').length;
+  // Update query badge
+  const qCount = data.filter(c=>c.claim_status==='QUERY_RAISED').length;
+  const badge = document.getElementById('queryBadge');
+  if(badge){ badge.textContent=qCount; badge.style.display=qCount>0?'block':'none'; }
+
+  const list = document.getElementById('empClaimsList');
+  if(!data.length){ list.innerHTML=`<div style="padding:48px;text-align:center;color:rgba(226,232,240,0.3)"><svg width="48" height="48" fill="none" stroke="currentColor" stroke-width="1" viewBox="0 0 24 24" style="margin:0 auto 12px;opacity:0.3"><path d="M9 17H5a2 2 0 00-2 2v2M13 7h4a2 2 0 012 2v4M9 7H5a2 2 0 00-2 2v4"/></svg><p>No claims yet. Start your first claim!</p></div>`; return; }
+
+  list.innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1.2fr 1fr 1fr auto;padding:12px 20px;font-size:11px;font-weight:600;color:rgba(226,232,240,0.4);letter-spacing:0.5px;text-transform:uppercase;border-bottom:1px solid rgba(255,255,255,0.06)">
+      <span>Claim #</span><span>Hospital</span><span>Amount</span><span>Status</span><span></span>
+    </div>
+    ${data.map(c=>`
+      <div class="table-row" style="grid-template-columns:1fr 1.2fr 1fr 1fr auto">
+        <div>
+          <div style="font-weight:600;font-size:14px;color:#e2e8f0">${c.claim_number||'Draft'}</div>
+          <div style="font-size:11px;color:rgba(226,232,240,0.4);margin-top:2px">${formatDate(c.admission_date)} – ${formatDate(c.discharge_date)}</div>
+        </div>
+        <div style="font-size:13px;color:rgba(226,232,240,0.7)">ID: ${c.hospital_id}</div>
+        <div>
+          <div style="font-size:13px;font-weight:600;color:#e2e8f0">${formatCurrency(c.claimed_amount)}</div>
+          ${c.eligible_amount?`<div style="font-size:11px;color:#34d399;margin-top:2px">Eligible: ${formatCurrency(c.eligible_amount)}</div>`:''}
+        </div>
+        <div>${getStatusBadge(c.claim_status)}</div>
+        <div style="display:flex;gap:8px">
+          <button onclick="viewClaimDetail(${c.claim_id})" style="padding:6px 14px;background:rgba(99,102,241,0.12);border:1px solid rgba(99,102,241,0.2);border-radius:8px;color:#818cf8;font-size:12px;cursor:pointer;font-family:'Sora',sans-serif">View</button>
+          ${c.claim_status==='DRAFT'?`<button onclick="submitExistingClaim(${c.claim_id})" style="padding:6px 14px;background:rgba(16,185,129,0.12);border:1px solid rgba(16,185,129,0.2);border-radius:8px;color:#34d399;font-size:12px;cursor:pointer;font-family:'Sora',sans-serif">Submit</button>`:''}
+        </div>
+      </div>`).join('')}`;
+}
+
+async function submitNewClaim(autoSubmit){
+  const payload = {
+    hospital_id: parseInt(document.getElementById('ncHospital').value),
+    diagnosis: document.getElementById('ncDiagnosis').value||undefined,
+    admission_date: document.getElementById('ncAdmission').value,
+    discharge_date: document.getElementById('ncDischarge').value,
+    total_bill_amount: parseFloat(document.getElementById('ncTotal').value),
+    claimed_amount: parseFloat(document.getElementById('ncClaimed').value),
+  };
+  if(!payload.hospital_id||!payload.admission_date||!payload.discharge_date||!payload.total_bill_amount||!payload.claimed_amount){
+    showToast('Please fill all required fields','error'); return;
+  }
+  const claim = await apiFetch('/claims/','POST',payload);
+  if(!claim){ return; }
+  showToast('Claim created!','success');
+  if(autoSubmit){
+    const submitted = await apiFetch(`/claims/${claim.claim_id}/submit`,'POST');
+    if(submitted) showToast(`Claim ${submitted.claim_number} submitted!`,'success');
+  }
+  // Reset form
+  ['ncHospital','ncDiagnosis','ncAdmission','ncDischarge','ncTotal','ncClaimed'].forEach(id=>{ document.getElementById(id).value=''; });
+  showPage('empDashboard'); loadMyClaims();
+}
+
+async function submitExistingClaim(id){
+  const data = await apiFetch(`/claims/${id}/submit`,'POST');
+  if(data){ showToast(`Claim ${data.claim_number} submitted!`,'success'); loadMyClaims(); }
+}
+
+async function viewClaimDetail(claimId){
+  STATE.currentClaimId = claimId;
+  const claim = await apiFetch(`/claims/${claimId}`);
+  if(!claim) return;
+  const docs = await apiFetch(`/documents/claim/${claimId}`);
+
+  const steps = ['DRAFT','SUBMITTED','SCRUTINY_APPROVED','MEDICAL_APPROVED','FINANCE_APPROVED','DDO_SANCTIONED','PAYMENT_PROCESSED'];
+  const currentIdx = steps.indexOf(claim.claim_status);
+
+  const content = document.getElementById('claimDetailContent');
+  content.innerHTML = `
+    <div style="display:flex;align-items:center;gap:16px;margin-bottom:28px">
+      <button onclick="showPage('empDashboard');loadMyClaims()" style="width:40px;height:40px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:10px;color:#e2e8f0;cursor:pointer;display:flex;align-items:center;justify-content:center"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></button>
+      <div><h1 style="font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:700">Claim ${claim.claim_number||'#'+claim.claim_id}</h1><p style="font-size:13px;color:rgba(226,232,240,0.5);margin-top:2px">Created ${formatDate(claim.created_at)}</p></div>
+      <div style="margin-left:auto">${getStatusBadge(claim.claim_status)}</div>
+    </div>
+
+    <!-- Workflow tracker -->
+    <div class="glass" style="border-radius:16px;padding:24px;margin-bottom:24px">
+      <h3 style="font-size:14px;font-weight:600;color:rgba(226,232,240,0.6);margin-bottom:20px;text-transform:uppercase;letter-spacing:0.5px">Claim Journey</h3>
+      <div class="workflow-track">
+        ${steps.map((s,i)=>{
+          const done = i<=currentIdx && claim.claim_status!=='QUERY_RAISED' && claim.claim_status!=='REJECTED';
+          const active = i===currentIdx;
+          const labels = {DRAFT:'Draft',SUBMITTED:'Submitted',SCRUTINY_APPROVED:'Scrutiny',MEDICAL_APPROVED:'Medical',FINANCE_APPROVED:'Finance',DDO_SANCTIONED:'DDO',PAYMENT_PROCESSED:'Paid'};
+          const dotColor = done ? '#10b981' : active ? '#6366f1' : 'rgba(255,255,255,0.1)';
+          const lineColor = i<currentIdx ? '#10b981' : 'rgba(255,255,255,0.08)';
+          return `
+            ${i>0?`<div class="wf-connector"><div class="wf-line" style="background:${lineColor}"></div></div>`:''}
+            <div class="wf-step">
+              <div class="wf-dot" style="background:${dotColor};color:#fff;box-shadow:${active?'0 0 0 4px rgba(99,102,241,0.25)':'none'}">
+                ${done?'✓':i+1}
+              </div>
+              <div style="font-size:10px;font-weight:600;color:${done||active?'#e2e8f0':'rgba(226,232,240,0.3)'};text-align:center;letter-spacing:0.3px">${labels[s]||s}</div>
+            </div>`;
+        }).join('')}
+        ${claim.claim_status==='REJECTED'?`<div class="wf-connector"><div class="wf-line" style="background:#f43f5e"></div></div><div class="wf-step"><div class="wf-dot" style="background:#f43f5e;color:#fff">✕</div><div style="font-size:10px;font-weight:600;color:#f43f5e;text-align:center">Rejected</div></div>`:''}
+      </div>
+      ${claim.claim_status==='QUERY_RAISED'?`<div style="margin-top:16px;padding:12px 16px;background:rgba(251,146,60,0.1);border:1px solid rgba(251,146,60,0.2);border-radius:10px;color:#fb923c;font-size:13px">⚠ A query has been raised on your claim. Go to <button onclick="navTo('myQueries')" style="background:none;border:none;color:#fb923c;text-decoration:underline;cursor:pointer;font-family:'Sora',sans-serif;font-size:13px">Queries</button> to respond.</div>`:''}
+    </div>
+
+    <!-- Details grid -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px">
+      <div class="glass" style="border-radius:16px;padding:20px">
+        <h3 style="font-size:13px;font-weight:600;color:rgba(226,232,240,0.5);margin-bottom:16px;text-transform:uppercase;letter-spacing:0.5px">Medical Details</h3>
+        ${row('Hospital ID', claim.hospital_id)}
+        ${row('Diagnosis', claim.diagnosis||'—')}
+        ${row('Admission', formatDate(claim.admission_date))}
+        ${row('Discharge', formatDate(claim.discharge_date))}
+      </div>
+      <div class="glass" style="border-radius:16px;padding:20px">
+        <h3 style="font-size:13px;font-weight:600;color:rgba(226,232,240,0.5);margin-bottom:16px;text-transform:uppercase;letter-spacing:0.5px">Financial Details</h3>
+        ${row('Total Bill', formatCurrency(claim.total_bill_amount))}
+        ${row('Claimed', formatCurrency(claim.claimed_amount))}
+        ${row('Eligible', formatCurrency(claim.eligible_amount), claim.eligible_amount?'#34d399':'inherit')}
+        ${row('Updated', formatDate(claim.updated_at))}
+      </div>
+    </div>
+
+    <!-- Documents -->
+    <div class="glass" style="border-radius:16px;padding:20px;margin-bottom:24px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+        <h3 style="font-size:13px;font-weight:600;color:rgba(226,232,240,0.5);text-transform:uppercase;letter-spacing:0.5px">Documents (${docs?docs.length:0})</h3>
+        <button onclick="showDocUpload(${claimId})" style="padding:6px 14px;background:rgba(99,102,241,0.12);border:1px solid rgba(99,102,241,0.2);border-radius:8px;color:#818cf8;font-size:12px;cursor:pointer;font-family:'Sora',sans-serif">+ Upload</button>
+      </div>
+      ${docs&&docs.length ? docs.map(d=>`
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:12px;background:rgba(255,255,255,0.03);border-radius:10px;margin-bottom:8px">
+          <div style="display:flex;align-items:center;gap:12px">
+            <div style="width:36px;height:36px;background:rgba(99,102,241,0.15);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px">${d.file_type==='pdf'?'📄':'🖼'}</div>
+            <div>
+              <div style="font-size:13px;font-weight:500;color:#e2e8f0">${d.file_name}</div>
+              <div style="font-size:11px;color:rgba(226,232,240,0.4);margin-top:2px;font-family:'JetBrains Mono',monospace">${d.file_hash.substring(0,20)}...</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            ${d.is_tampered?`<span class="tag" style="background:rgba(244,63,94,0.15);color:#f43f5e">TAMPERED</span>`:d.verified_at?`<span class="tag" style="background:rgba(16,185,129,0.15);color:#10b981">VERIFIED</span>`:`<span class="tag" style="background:rgba(148,163,184,0.15);color:#94a3b8">PENDING</span>`}
+          </div>
+        </div>`).join('') : `<div style="text-align:center;padding:24px;color:rgba(226,232,240,0.3);font-size:13px">No documents uploaded yet</div>`}
+    </div>`;
+  showPage('claimDetail');
+}
+
+function row(label, value, color){
+  return `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.05)">
+    <span style="font-size:13px;color:rgba(226,232,240,0.5)">${label}</span>
+    <span style="font-size:13px;font-weight:500;color:${color||'#e2e8f0'}">${value}</span>
+  </div>`;
+}
+
+function showDocUpload(claimId){
+  document.getElementById('udClaimId').value = claimId;
+  showPage('uploadDoc');
+}
+
+// ================================================================
+// EMPLOYEE: QUERIES
+// ================================================================
+async function loadMyQueries(){
+  const data = await apiFetch('/queries/my');
+  const container = document.getElementById('queriesList');
+  if(!data||!data.length){
+    container.innerHTML=`<div style="padding:48px;text-align:center;color:rgba(226,232,240,0.3)"><svg width="48" height="48" fill="none" stroke="currentColor" stroke-width="1" viewBox="0 0 24 24" style="margin:0 auto 12px;opacity:0.3"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg><p>No pending queries. You're all caught up!</p></div>`;
+    return;
+  }
+  container.innerHTML = data.map(q=>`
+    <div style="padding:20px 24px;border-bottom:1px solid rgba(255,255,255,0.05)">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap">
+        <div style="flex:1">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+            <span style="font-size:13px;font-weight:600;color:#fb923c">Claim #${q.claim_id}</span>
+            <span class="tag" style="background:rgba(251,146,60,0.1);color:#fb923c">${q.raised_stage.replace(/_/g,' ')}</span>
+          </div>
+          <p style="font-size:14px;color:#e2e8f0;margin-bottom:6px">${q.query_message}</p>
+          <p style="font-size:12px;color:rgba(226,232,240,0.4)">Raised ${formatDate(q.created_at)}</p>
+        </div>
+        <button onclick="openRespondModal(${q.query_id},'${q.query_message.replace(/'/g,'\\\'')}')" class="btn-primary" style="padding:10px 18px;flex-shrink:0"><span>Respond</span></button>
+      </div>
+    </div>`).join('');
+}
+
+function openRespondModal(queryId, queryText){
+  document.getElementById('respondQueryId').value = queryId;
+  document.getElementById('respondQueryText').textContent = queryText;
+  document.getElementById('respondText').value = '';
+  openModal('respondModal');
+}
+
+async function submitQueryResponse(){
+  const queryId = document.getElementById('respondQueryId').value;
+  const response_text = document.getElementById('respondText').value.trim();
+  if(!response_text){ showToast('Please write a response','error'); return; }
+  const data = await apiFetch(`/queries/${queryId}/respond`,'POST',{response_text});
+  if(data){ showToast('Response submitted! Claim re-submitted for review.','success'); closeModal('respondModal'); loadMyQueries(); }
+}
+
+// ================================================================
+// DOCUMENT UPLOAD
+// ================================================================
+let selectedFile = null;
+function onFileSelect(event){ selectedFile = event.target.files[0]; if(selectedFile) document.getElementById('dropzoneText').textContent = selectedFile.name; }
+function handleDrop(event){ event.preventDefault(); selectedFile=event.dataTransfer.files[0]; if(selectedFile) document.getElementById('dropzoneText').textContent=selectedFile.name; document.getElementById('dropzone').style.borderColor='rgba(99,102,241,0.3)'; document.getElementById('dropzone').style.background='rgba(99,102,241,0.03)'; }
+
+async function uploadDocument(){
+  const claimId = document.getElementById('udClaimId').value;
+  const docType = document.getElementById('udDocType').value;
+  if(!claimId||!selectedFile){ showToast('Please select a claim and file','error'); return; }
+  const form = new FormData();
+  form.append('claim_id',claimId); form.append('document_type_id',docType); form.append('file',selectedFile);
+  const data = await apiFetch('/documents/upload','POST',form,true);
+  if(data){
+    showToast(`Document uploaded! SHA-256: ${data.file_hash.substring(0,16)}...`,'success');
+    selectedFile=null; document.getElementById('dropzoneText').textContent='Drag & drop or click to browse'; document.getElementById('udFile').value='';
+    showPage('empDashboard'); loadMyClaims();
+  }
+}
+
+// ================================================================
+// OFFICER QUEUE
+// ================================================================
+const QUEUE_ENDPOINTS = {
+  SCRUTINY_OFFICER: '/scrutiny/queue',
+  MEDICAL_OFFICER: '/medical/queue',
+  FINANCE_OFFICER: '/finance/queue',
+  DDO: '/ddo/queue',
+};
+const QUEUE_TITLES = {
+  SCRUTINY_OFFICER: {title:'Scrutiny Queue', sub:'Claims awaiting document verification'},
+  MEDICAL_OFFICER:  {title:'Medical Review Queue', sub:'Claims awaiting medical validation'},
+  FINANCE_OFFICER:  {title:'Finance Queue', sub:'Claims awaiting entitlement calculation'},
+  DDO:              {title:'Sanction Queue', sub:'Claims awaiting final DDO sanction'},
+};
+
+async function loadOfficerQueue(){
+  const role = STATE.role;
+  const endpoint = QUEUE_ENDPOINTS[role];
+  const titles = QUEUE_TITLES[role]||{title:'Queue',sub:''};
+  document.getElementById('queueTitle').textContent = titles.title;
+  document.getElementById('queueSubtitle').textContent = titles.sub;
+  if(!endpoint){ return; }
+  const data = await apiFetch(endpoint);
+  const container = document.getElementById('officerQueueList');
+  if(!data||!data.length){
+    container.innerHTML=`<div style="padding:48px;text-align:center;color:rgba(226,232,240,0.3)"><svg width="48" height="48" fill="none" stroke="currentColor" stroke-width="1" viewBox="0 0 24 24" style="margin:0 auto 12px;opacity:0.3"><polyline points="20 6 9 17 4 12"/></svg><p>Queue is empty. All caught up!</p></div>`;
+    return;
+  }
+  container.innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1.2fr 1fr 1fr auto;padding:12px 20px;font-size:11px;font-weight:600;color:rgba(226,232,240,0.4);letter-spacing:0.5px;text-transform:uppercase;border-bottom:1px solid rgba(255,255,255,0.06)">
+      <span>Claim #</span><span>Details</span><span>Amount</span><span>Status</span><span>Actions</span>
+    </div>
+    ${data.map(c=>`
+      <div class="table-row" style="grid-template-columns:1fr 1.2fr 1fr 1fr auto">
+        <div>
+          <div style="font-weight:600;font-size:14px;color:#e2e8f0">${c.claim_number||'#'+c.claim_id}</div>
+          <div style="font-size:11px;color:rgba(226,232,240,0.4);margin-top:2px">ID: ${c.claim_id}</div>
+        </div>
+        <div>
+          <div style="font-size:13px;color:rgba(226,232,240,0.7)">Hospital ${c.hospital_id}</div>
+          <div style="font-size:11px;color:rgba(226,232,240,0.4);margin-top:2px">${formatDate(c.admission_date)} – ${formatDate(c.discharge_date)}</div>
+        </div>
+        <div>
+          <div style="font-size:13px;font-weight:600;color:#e2e8f0">${formatCurrency(c.claimed_amount)}</div>
+          ${c.eligible_amount?`<div style="font-size:11px;color:#34d399;margin-top:2px">Eligible: ${formatCurrency(c.eligible_amount)}</div>`:''}
+        </div>
+        <div>${getStatusBadge(c.claim_status)}</div>
+        <div>
+          <button onclick="reviewClaim(${c.claim_id})" class="btn-primary" style="padding:8px 16px;font-size:12px"><span>Review →</span></button>
+        </div>
+      </div>`).join('')}`;
+}
+
+async function reviewClaim(claimId){
+  STATE.currentClaimId = claimId;
+  const claim = await apiFetch(`/claims/${claimId}`);
+  if(!claim) return;
+  const docs = await apiFetch(`/documents/claim/${claimId}`);
+
+  let actionButtons = '';
+  if(STATE.role==='SCRUTINY_OFFICER'){
+    actionButtons = `
+      <button class="btn-success" onclick="officerApprove('scrutiny')">✓ Approve — Documents Verified</button>
+      <button class="btn-warning" onclick="openQueryModal(${claimId})">? Raise Query</button>
+      <button class="btn-danger" onclick="openRejectModal(${claimId})">✕ Reject</button>`;
+  } else if(STATE.role==='MEDICAL_OFFICER'){
+    actionButtons = `
+      <button class="btn-success" onclick="officerApprove('medical')">✓ Approve — Treatment Valid</button>
+      <button class="btn-outline" onclick="checkHospital(${claimId})">🏥 Check Hospital Empanelment</button>
+      <button class="btn-warning" onclick="openQueryModal(${claimId})">? Raise Query</button>
+      <button class="btn-danger" onclick="openRejectModal(${claimId})">✕ Reject</button>`;
+  } else if(STATE.role==='FINANCE_OFFICER'){
+    actionButtons = `
+      <button class="btn-success" onclick="openFinanceModal(${claimId})">₹ Calculate & Approve</button>
+      <button class="btn-warning" onclick="openQueryModal(${claimId})">? Raise Query</button>
+      <button class="btn-danger" onclick="openRejectModal(${claimId})">✕ Reject</button>`;
+  } else if(STATE.role==='DDO'){
+    actionButtons = `
+      <button class="btn-success" onclick="ddoSanction(${claimId})">✍ Final Sanction & Payment</button>`;
+  }
+
+  const content = document.getElementById('claimReviewContent');
+  content.innerHTML = `
+    <div style="display:flex;align-items:center;gap:16px;margin-bottom:28px">
+      <button onclick="showPage('officerQueue');loadOfficerQueue()" style="width:40px;height:40px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:10px;color:#e2e8f0;cursor:pointer;display:flex;align-items:center;justify-content:center"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></button>
+      <div><h1 style="font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:700">Review: ${claim.claim_number||'Claim #'+claim.claim_id}</h1><p style="font-size:13px;color:rgba(226,232,240,0.5);margin-top:2px">Employee Claim ID ${claim.employee_id}</p></div>
+      <div style="margin-left:auto">${getStatusBadge(claim.claim_status)}</div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px">
+      <div class="glass" style="border-radius:16px;padding:20px">
+        <h3 style="font-size:13px;font-weight:600;color:rgba(226,232,240,0.5);margin-bottom:16px;text-transform:uppercase;letter-spacing:0.5px">Medical Details</h3>
+        ${row('Hospital ID', claim.hospital_id)}
+        ${row('Diagnosis', claim.diagnosis||'—')}
+        ${row('Admission', formatDate(claim.admission_date))}
+        ${row('Discharge', formatDate(claim.discharge_date))}
+      </div>
+      <div class="glass" style="border-radius:16px;padding:20px">
+        <h3 style="font-size:13px;font-weight:600;color:rgba(226,232,240,0.5);margin-bottom:16px;text-transform:uppercase;letter-spacing:0.5px">Financial Details</h3>
+        ${row('Total Bill', formatCurrency(claim.total_bill_amount))}
+        ${row('Claimed Amount', formatCurrency(claim.claimed_amount))}
+        ${claim.eligible_amount?row('Eligible Amount', formatCurrency(claim.eligible_amount), '#34d399'):''}
+        ${row('Updated', formatDate(claim.updated_at))}
+      </div>
+    </div>
+
+    <!-- Documents -->
+    <div class="glass" style="border-radius:16px;padding:20px;margin-bottom:24px">
+      <h3 style="font-size:13px;font-weight:600;color:rgba(226,232,240,0.5);margin-bottom:16px;text-transform:uppercase;letter-spacing:0.5px">Submitted Documents (${docs?docs.length:0})</h3>
+      ${docs&&docs.length ? docs.map(d=>`
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:12px;background:rgba(255,255,255,0.03);border-radius:10px;margin-bottom:8px;flex-wrap:wrap;gap:8px">
+          <div style="display:flex;align-items:center;gap:12px">
+            <div style="width:36px;height:36px;background:rgba(99,102,241,0.15);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px">${d.file_type==='pdf'?'📄':'🖼'}</div>
+            <div>
+              <div style="font-size:13px;font-weight:500;color:#e2e8f0">${d.file_name}</div>
+              <div style="font-size:11px;color:rgba(226,232,240,0.4);margin-top:2px;font-family:'JetBrains Mono',monospace">${d.file_hash.substring(0,24)}...</div>
+              <div style="font-size:11px;color:rgba(226,232,240,0.4)">Uploaded ${formatDate(d.upload_time)} · ${(d.file_size/1024).toFixed(1)} KB</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            ${d.is_tampered?`<span class="tag" style="background:rgba(244,63,94,0.15);color:#f43f5e">TAMPERED</span>`:d.verified_at?`<span class="tag" style="background:rgba(16,185,129,0.15);color:#10b981">VERIFIED</span>`:`<span class="tag" style="background:rgba(148,163,184,0.15);color:#94a3b8">UNVERIFIED</span>`}
+            ${!d.verified_at&&STATE.role==='SCRUTINY_OFFICER'?`<button onclick="verifyDoc(${d.document_id})" style="padding:5px 12px;background:rgba(99,102,241,0.12);border:1px solid rgba(99,102,241,0.2);border-radius:7px;color:#818cf8;font-size:11px;cursor:pointer;font-family:'Sora',sans-serif">Verify Hash</button>`:''}
+          </div>
+        </div>`).join('') : `<div style="text-align:center;padding:24px;color:rgba(226,232,240,0.3);font-size:13px">No documents uploaded</div>`}
+    </div>
+
+    <!-- Action panel -->
+    <div class="glass" style="border-radius:16px;padding:24px" id="hospitalCheckResult"></div>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:24px">
+      ${actionButtons}
+    </div>`;
+
+  showPage('claimReview');
+}
+
+async function verifyDoc(docId){
+  const data = await apiFetch(`/documents/${docId}/verify`,'POST');
+  if(data){
+    if(data.hash_matched){ showToast('Hash verified — document is intact ✓','success'); }
+    else { showToast('TAMPER DETECTED — hash mismatch!','error'); }
+    reviewClaim(STATE.currentClaimId);
+  }
+}
+
+async function checkHospital(claimId){
+  const data = await apiFetch(`/medical/${claimId}/hospital-check`);
+  if(!data) return;
+  const el = document.getElementById('hospitalCheckResult');
+  if(!el) return;
+  el.innerHTML = `
+    <h3 style="font-size:13px;font-weight:600;color:rgba(226,232,240,0.5);margin-bottom:12px;text-transform:uppercase;letter-spacing:0.5px">Hospital Empanelment Check</h3>
+    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+      <span style="font-size:15px;font-weight:600;color:#e2e8f0">${data.hospital_name}</span>
+      ${data.is_empanelled?`<span class="tag" style="background:rgba(16,185,129,0.15);color:#10b981">EMPANELLED</span>${data.empanelment_tier?`<span class="tag" style="background:rgba(96,165,250,0.15);color:#60a5fa">Tier ${data.empanelment_tier}</span>`:''}`:
+      `<span class="tag" style="background:rgba(244,63,94,0.15);color:#f43f5e">NOT EMPANELLED</span>`}
+    </div>
+    ${data.warning?`<div style="margin-top:12px;padding:12px;background:rgba(244,63,94,0.08);border:1px solid rgba(244,63,94,0.2);border-radius:10px;color:#fb7185;font-size:13px">⚠ ${data.warning}</div>`:''}`;
+}
+
+async function officerApprove(type){
+  const endpoints = { scrutiny:`/scrutiny/${STATE.currentClaimId}/approve`, medical:`/medical/${STATE.currentClaimId}/approve` };
+  const data = await apiFetch(endpoints[type],'POST');
+  if(data){ showToast('Claim approved successfully!','success'); showPage('officerQueue'); loadOfficerQueue(); }
+}
+
+function openQueryModal(claimId){ document.getElementById('queryClaimId').value=claimId; document.getElementById('queryMessage').value=''; openModal('queryModal'); }
+function openRejectModal(claimId){ document.getElementById('rejectClaimId').value=claimId; openModal('rejectModal'); }
+
+async function submitQuery(){
+  const claimId = document.getElementById('queryClaimId').value;
+  const msg = document.getElementById('queryMessage').value.trim();
+  if(!msg){ showToast('Please enter a query message','error'); return; }
+  const role = STATE.role;
+  const ep = role==='SCRUTINY_OFFICER'?`/scrutiny/${claimId}/query`:role==='MEDICAL_OFFICER'?`/medical/${claimId}/query`:`/finance/${claimId}/query`;
+  const data = await apiFetch(ep,'POST',{claim_id:parseInt(claimId),query_message:msg,raised_stage:role});
+  if(data){ showToast('Query raised! Employee has been notified.','success'); closeModal('queryModal'); showPage('officerQueue'); loadOfficerQueue(); }
+}
+
+async function confirmReject(){
+  const claimId = document.getElementById('rejectClaimId').value;
+  const role = STATE.role;
+  const ep = role==='SCRUTINY_OFFICER'?`/scrutiny/${claimId}/reject`:role==='MEDICAL_OFFICER'?`/medical/${claimId}/reject`:`/finance/${claimId}/reject`;
+  const data = await apiFetch(ep,'POST');
+  if(data){ showToast('Claim rejected.','info'); closeModal('rejectModal'); showPage('officerQueue'); loadOfficerQueue(); }
+}
+
+async function openFinanceModal(claimId){
+  document.getElementById('financeClaimId').value = claimId;
+  document.getElementById('financeOverrideAmount').value = '';
+  document.getElementById('financeOverrideReason').value = '';
+  document.getElementById('financeCalculated').textContent = 'Calculating...';
+  document.getElementById('financeBreakdown').innerHTML = '';
+  openModal('financeModal');
+  const data = await apiFetch(`/finance/${claimId}/calculate`);
+  if(data){
+    document.getElementById('financeCalculated').textContent = formatCurrency(data.system_calculated);
+    if(data.breakdown&&data.breakdown.length){
+      document.getElementById('financeBreakdown').innerHTML = data.breakdown.map(b=>`<div style="margin-top:4px">${b.rule}: ${formatCurrency(b.applied)} / cap ${formatCurrency(b.cap)}</div>`).join('');
+    }
+  }
+}
+
+async function confirmFinanceApprove(){
+  const claimId = document.getElementById('financeClaimId').value;
+  const oa = document.getElementById('financeOverrideAmount').value;
+  const or_ = document.getElementById('financeOverrideReason').value;
+  const payload = {};
+  if(oa){ payload.override_amount = parseFloat(oa); payload.override_reason = or_; }
+  const data = await apiFetch(`/finance/${claimId}/approve`,'POST',payload);
+  if(data){ showToast('Claim approved! Eligible amount set.','success'); closeModal('financeModal'); showPage('officerQueue'); loadOfficerQueue(); }
+}
+
+async function ddoSanction(claimId){
+  if(!confirm('Confirm final sanction and initiate payment?')) return;
+  const data = await apiFetch(`/ddo/${claimId}/sanction`,'POST');
+  if(data){ showToast('Claim sanctioned! Payment initiated via PFMS.','success'); showPage('officerQueue'); loadOfficerQueue(); }
+}
+
+// ================================================================
+// DDO SANCTIONED
+// ================================================================
+async function loadDDOSanctioned(){
+  const data = await apiFetch('/ddo/sanctioned');
+  const container = document.getElementById('ddoSanctionedList');
+  if(!data||!data.length){
+    container.innerHTML=`<div style="padding:48px;text-align:center;color:rgba(226,232,240,0.3)"><p>No sanctioned claims yet.</p></div>`;
+    return;
+  }
+  container.innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;padding:12px 20px;font-size:11px;font-weight:600;color:rgba(226,232,240,0.4);letter-spacing:0.5px;text-transform:uppercase;border-bottom:1px solid rgba(255,255,255,0.06)">
+      <span>Claim ID</span><span>Claim Number</span><span>Eligible Amount</span>
+    </div>
+    ${data.map(c=>`
+      <div class="table-row" style="grid-template-columns:1fr 1fr 1fr">
+        <span style="font-size:14px;color:#e2e8f0">#${c.claim_id}</span>
+        <span style="font-size:14px;color:#818cf8">${c.claim_number||'—'}</span>
+        <span style="font-size:14px;font-weight:600;color:#34d399">${formatCurrency(c.eligible_amount)}</span>
+      </div>`).join('')}`;
+}
+</script>
+</body>
+</html>
+
+
+
+
