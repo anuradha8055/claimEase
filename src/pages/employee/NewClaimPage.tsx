@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PageTransition } from '../../components/layout/PageTransition';
@@ -14,34 +13,33 @@ import {
   CheckCircle2,
   ChevronRight,
   ChevronLeft,
-  Info,
-  User
+  Info
 } from 'lucide-react';
-import { differenceInDays } from 'date-fns';
+import { format, differenceInDays } from 'date-fns';
 import toast from 'react-hot-toast';
+import { address } from 'motion/react-client';
 
 export const NewClaimPage: React.FC = () => {
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
-  
   const [formData, setFormData] = useState({
-    // PATIENT
+    // new 
     patient_name: '',
     relation: '',
     birth_date: '',
     gender: '',
     diagnosis: '',
 
-    // HOSPITAL
+    // EXISTING
+    hospital_id: '',
     hospital_name: '',
     hospital_address: '',
     doctor_name: '',
     doctor_qualification: '',
-    treatment: '',
+    treatment_details: '',
+
     admission_date: '',
     discharge_date: '',
-
-    // FINANCIAL
     total_bill_amount: '',
   });
 
@@ -49,7 +47,7 @@ export const NewClaimPage: React.FC = () => {
     ? differenceInDays(new Date(formData.discharge_date), new Date(formData.admission_date))
     : 0;
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
@@ -58,7 +56,7 @@ export const NewClaimPage: React.FC = () => {
   const prevStep = () => setStep(prev => prev - 1);
 
   const handleSubmit = async (status: 'DRAFT' | 'SUBMITTED') => {
-    if (Number(formData.total_bill_amount) <= 0 && status === 'SUBMITTED') {
+    if (Number(formData.total_bill_amount) <= 0) {
       toast.error('Please enter a valid bill amount');
       return;
     }
@@ -72,17 +70,17 @@ export const NewClaimPage: React.FC = () => {
     }, 1500);
   };
 
+  // const steps = [
+    // { id: 1, title: 'Hospital & Dates', icon: Hospital },
+    // { id: 2, title: 'Financial Details', icon: IndianRupee },
+    // { id: 3, title: 'Review & Submit', icon: CheckCircle2 },
+  // ];
   const steps = [
-    { id: 1, title: 'Patient', icon: User },
-    { id: 2, title: 'Hospital', icon: Hospital },
-    { id: 3, title: 'Financial', icon: IndianRupee },
-    { id: 4, title: 'Review', icon: CheckCircle2 },
-  ];
-
-  // Common Input Style
-  const inputClass = "w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-text-primary focus:outline-none focus:border-accent-purple transition-all";
-  const labelClass = "text-xs font-bold text-text-muted uppercase tracking-widest";
-
+  { id: 1, title: 'Patient Details', icon: Info },
+  { id: 2, title: 'Hospital & Dates', icon: Hospital },
+  { id: 3, title: 'Financial Details', icon: IndianRupee },
+  { id: 4, title: 'Review & Submit', icon: CheckCircle2 },
+    ];
   return (
     <PageTransition>
       <div className="max-w-3xl mx-auto space-y-8">
@@ -124,50 +122,90 @@ export const NewClaimPage: React.FC = () => {
 
         <GlassCard className="p-8">
           <AnimatePresence mode="wait">
-            {/* STEP 1: PATIENT DETAILS */}
             {step === 1 && (
-              <motion.div 
-                key="step1"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                className="space-y-6"
-              >
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <label className={labelClass}>Patient Name</label>
-                    <input name="patient_name" value={formData.patient_name} onChange={handleInputChange} className={inputClass} placeholder="Full Name" />
-                  </div>
-                  <div className="space-y-2">
-                    <label className={labelClass}>Relation</label>
-                    <input name="relation" value={formData.relation} onChange={handleInputChange} className={inputClass} placeholder="e.g. Self, Spouse" />
-                  </div>
-                  <div className="space-y-2">
-                    <label className={labelClass}>Date of Birth</label>
-                    <input type="date" name="birth_date" value={formData.birth_date} onChange={handleInputChange} className={inputClass} />
-                  </div>
-                  <div className="space-y-2">
-                    <label className={labelClass}>Gender</label>
-                    <select name="gender" value={formData.gender} onChange={handleInputChange} className={inputClass}>
-                      <option value="Male">Male</option>
-                      <option value="Female">Female</option>
-                      <option value="Other">Other</option>
-                    </select>
-                  </div>
-                  <div className="md:col-span-2 space-y-2">
-                    <label className={labelClass}>Diagnosis</label>
-                    <input name="diagnosis" value={formData.diagnosis} onChange={handleInputChange} className={inputClass} placeholder="Reason for admission" />
-                  </div>
-                </div>
-                <div className="flex justify-end pt-4">
-                  <GradientButton onClick={nextStep} className="gap-2">
-                    Next <ChevronRight size={18} />
-                  </GradientButton>
-                </div>
-              </motion.div>
-            )}
+  <motion.div
+    key="step0"
+    initial={{ opacity: 0, x: 20 }}
+    animate={{ opacity: 1, x: 0 }}
+    exit={{ opacity: 0, x: -20 }}
+    className="space-y-6"
+  >
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
-            {/* STEP 2: HOSPITAL DETAILS */}
+      <div className="space-y-2">
+        <label className="text-xs font-bold text-text-muted uppercase">Patient Name</label>
+        <input
+          type="text"
+          name="patient_name"
+          value={formData.patient_name}
+          onChange={handleInputChange}
+          className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-text-primary"
+          placeholder="Enter patient name"
+        />
+      </div>
+
+      <div className="space-y-2">
+        <label className="text-xs font-bold text-text-muted uppercase">Relation</label>
+        <input
+          type="text"
+          name="relation"
+          value={formData.relation}
+          onChange={handleInputChange}
+          className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-text-primary"
+          placeholder="e.g. Father, Mother"
+        />
+      </div>
+
+      <div className="space-y-2">
+        <label className="text-xs font-bold text-text-muted uppercase">Birth Date</label>
+        <input
+          type="date"
+          name="birth_date"
+          value={formData.birth_date}
+          onChange={handleInputChange}
+          className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-text-primary"
+        />
+      </div>
+
+      <div className="space-y-2">
+        <label className="text-xs font-bold text-text-muted uppercase">Gender</label>
+        <select
+          name="gender"
+          value={formData.gender}
+          onChange={handleInputChange}
+          // className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-text-primary"
+          className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-accent-purple"
+        >
+          {/* <option value="">Select Gender</option> */}
+          {/* <option value="Male">Male</option> */}
+          {/* <option value="Female">Female</option> */}
+          <option value="" className="text-black">Select Gender</option>
+          <option value="Male" className="text-black">Male</option>
+          <option value="Female" className="text-black">Female</option>
+        </select>
+      </div>
+
+      <div className="md:col-span-2 space-y-2">
+        <label className="text-xs font-bold text-text-muted uppercase">Diagnosis</label>
+        <input
+          type="text"
+          name="diagnosis"
+          value={formData.diagnosis}
+          onChange={handleInputChange}
+          className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-text-primary"
+          placeholder="Enter diagnosis"
+        />
+      </div>
+
+    </div>
+
+    <div className="flex justify-end pt-4">
+      <GradientButton onClick={nextStep}>
+        Next Step <ChevronRight size={18} />
+      </GradientButton>
+    </div>
+  </motion.div>
+)}
             {step === 2 && (
               <motion.div
                 key="step2"
@@ -178,46 +216,131 @@ export const NewClaimPage: React.FC = () => {
               >
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
-                    <label className={labelClass}>Hospital Name</label>
-                    <input name="hospital_name" value={formData.hospital_name} onChange={handleInputChange} className={inputClass} placeholder="Enter hospital name" />
+                    <label className="text-xs font-bold text-text-muted uppercase tracking-widest">Hospital ID</label>
+                    <input
+                      type="number"
+                      name="hospital_id"
+                      value={formData.hospital_id}
+                      onChange={handleInputChange}
+                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-text-primary focus:outline-none focus:border-accent-purple transition-all"
+                      placeholder="Enter Hospital ID"
+                    />
                   </div>
                   <div className="space-y-2">
-                    <label className={labelClass}>Doctor Name</label>
-                    <input name="doctor_name" value={formData.doctor_name} onChange={handleInputChange} className={inputClass} placeholder="Dr. Name" />
+                    <label className="text-xs font-bold text-text-muted uppercase tracking-widest">Diagnosis</label>
+                    <input
+                      type="text"
+                      name="diagnosis"
+                      value={formData.diagnosis}
+                      onChange={handleInputChange}
+                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-text-primary focus:outline-none focus:border-accent-purple transition-all"
+                      placeholder="e.g. Acute Appendicitis"
+                    />
+                  </div>
+                  {/* Hospital Name */}
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-text-muted uppercase">Hospital Name</label>
+                    <input
+    type="text"
+    name="hospital_name"
+    value={formData.hospital_name}
+    onChange={handleInputChange}
+    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-text-primary"
+    placeholder="Enter hospital name"
+  />
+</div>
+
+{/* Hospital Address */}
+<div className="space-y-2">
+  <label className="text-xs font-bold text-text-muted uppercase">Hospital Address</label>
+  <input
+    type="text"
+    name="hospital_address"
+    value={formData.hospital_address}
+    onChange={handleInputChange}
+    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-text-primary"
+    placeholder="Enter hospital address"
+  />
+</div>
+
+{/* Doctor Name */}
+<div className="space-y-2">
+  <label className="text-xs font-bold text-text-muted uppercase">Doctor Name</label>
+  <input
+    type="text"
+    name="doctor_name"
+    value={formData.doctor_name}
+    onChange={handleInputChange}
+    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-text-primary"
+    placeholder="Enter doctor name"
+  />
+</div>
+
+{/* Doctor Qualification */}
+<div className="space-y-2">
+  <label className="text-xs font-bold text-text-muted uppercase">Doctor Qualification</label>
+  <input
+    type="text"
+    name="doctor_qualification"
+    value={formData.doctor_qualification}
+    onChange={handleInputChange}
+    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-text-primary"
+    placeholder="e.g. MBBS, MD"
+  />
+</div>
+
+{/* Treatment Taken */}
+<div className="md:col-span-2 space-y-2">
+  <label className="text-xs font-bold text-text-muted uppercase">Treatment Taken</label>
+  <textarea
+    name="treatment_taken"
+    value={formData.treatment_taken}
+    onChange={handleInputChange}
+    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-text-primary"
+    placeholder="Describe treatment"
+  />
+</div>
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-text-muted uppercase tracking-widest">Admission Date</label>
+                    <input
+                      type="date"
+                      name="admission_date"
+                      value={formData.admission_date}
+                      onChange={handleInputChange}
+                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-text-primary focus:outline-none focus:border-accent-purple transition-all"
+                    />
                   </div>
                   <div className="space-y-2">
-                    <label className={labelClass}>Admission Date</label>
-                    <input type="date" name="admission_date" value={formData.admission_date} onChange={handleInputChange} className={inputClass} />
-                  </div>
-                  <div className="space-y-2">
-                    <label className={labelClass}>Discharge Date</label>
-                    <input type="date" name="discharge_date" value={formData.discharge_date} onChange={handleInputChange} className={inputClass} />
-                  </div>
-                  <div className="md:col-span-2 space-y-2">
-                    <label className={labelClass}>Treatment Description</label>
-                    <textarea name="treatment" value={formData.treatment} onChange={handleInputChange} className={cn(inputClass, "h-24 resize-none")} placeholder="Briefly describe treatment..." />
+                    <label className="text-xs font-bold text-text-muted uppercase tracking-widest">Discharge Date</label>
+                    <input
+                      type="date"
+                      name="discharge_date"
+                      value={formData.discharge_date}
+                      onChange={handleInputChange}
+                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-text-primary focus:outline-none focus:border-accent-purple transition-all"
+                    />
                   </div>
                 </div>
 
                 {duration > 0 && (
                   <div className="p-4 bg-accent-purple/10 border border-accent-purple/20 rounded-xl flex items-center gap-3">
                     <Calendar className="text-accent-purple" size={20} />
-                    <p className="text-sm text-text-primary"> Calculated Stay: <span className="font-bold text-accent-purple">{duration} days</span> </p>
+                    <p className="text-sm text-text-primary">
+                      Calculated Stay Duration: <span className="font-bold text-accent-purple">{duration} days</span>
+                    </p>
                   </div>
                 )}
 
-                <div className="flex justify-between pt-4">
-                  <GradientButton variant="outline" onClick={prevStep} className="gap-2">
-                    <ChevronLeft size={18} /> Back
-                  </GradientButton>
+                <div className="flex justify-end pt-4">
                   <GradientButton onClick={nextStep} className="gap-2">
-                    Next <ChevronRight size={18} />
+                    Next Step <ChevronRight size={18} />
                   </GradientButton>
+                
                 </div>
               </motion.div>
+              
             )}
 
-            {/* STEP 3: FINANCIAL DETAILS */}
             {step === 3 && (
               <motion.div
                 key="step3"
@@ -226,19 +349,19 @@ export const NewClaimPage: React.FC = () => {
                 exit={{ opacity: 0, x: -20 }}
                 className="space-y-6"
               >
-                <div className="space-y-4">
+                <div className="space-y-6">
                   <div className="space-y-2">
-                    <label className={labelClass}>Total Bill Amount (₹)</label>
+                    <label className="text-xs font-bold text-text-muted uppercase tracking-widest">Total Bill Amount (₹)</label>
                     <input
                       type="number"
                       name="total_bill_amount"
                       value={formData.total_bill_amount}
                       onChange={handleInputChange}
-                      className={cn(inputClass, "text-2xl font-bold")}
+                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-text-primary focus:outline-none focus:border-accent-purple transition-all text-xl font-bold font-space"
                       placeholder="0.00"
                     />
                     {formData.total_bill_amount && (
-                      <p className="text-xs text-text-muted">In Words: {formatCurrency(Number(formData.total_bill_amount))}</p>
+                      <p className="text-xs text-text-muted">Preview: {formatCurrency(formData.total_bill_amount)}</p>
                     )}
                   </div>
                 </div>
@@ -254,7 +377,6 @@ export const NewClaimPage: React.FC = () => {
               </motion.div>
             )}
 
-            {/* STEP 4: REVIEW & SUBMIT */}
             {step === 4 && (
               <motion.div
                 key="step4"
@@ -264,31 +386,31 @@ export const NewClaimPage: React.FC = () => {
                 className="space-y-6"
               >
                 <div className="bg-white/5 rounded-2xl p-6 border border-white/10 space-y-6">
-                  <div className="grid grid-cols-2 gap-y-4 gap-x-6">
+                  <div className="grid grid-cols-2 gap-y-4">
                     <div>
-                      <p className={labelClass}>Patient</p>
-                      <p className="text-sm text-text-primary font-medium">{formData.patient_name || 'N/A'}</p>
+                      <p className="text-[10px] font-bold text-text-muted uppercase tracking-widest">Hospital ID</p>
+                      <p className="text-sm text-text-primary font-medium">{formData.hospital_id}</p>
                     </div>
                     <div>
-                      <p className={labelClass}>Hospital</p>
-                      <p className="text-sm text-text-primary font-medium">{formData.hospital_name || 'N/A'}</p>
+                      <p className="text-[10px] font-bold text-text-muted uppercase tracking-widest">Diagnosis</p>
+                      <p className="text-sm text-text-primary font-medium">{formData.diagnosis}</p>
                     </div>
                     <div>
-                      <p className={labelClass}>Admission</p>
-                      <p className="text-sm text-text-primary font-medium">{formData.admission_date || 'N/A'}</p>
+                      <p className="text-[10px] font-bold text-text-muted uppercase tracking-widest">Admission</p>
+                      <p className="text-sm text-text-primary font-medium">{formData.admission_date}</p>
                     </div>
                     <div>
-                      <p className={labelClass}>Discharge</p>
-                      <p className="text-sm text-text-primary font-medium">{formData.discharge_date || 'N/A'}</p>
+                      <p className="text-[10px] font-bold text-text-muted uppercase tracking-widest">Discharge</p>
+                      <p className="text-sm text-text-primary font-medium">{formData.discharge_date}</p>
                     </div>
-                    <div className="col-span-2 pt-4 border-t border-white/5">
-                      <p className={labelClass}>Total Claim Amount</p>
-                      <p className="text-2xl text-accent-green font-bold">{formatCurrency(Number(formData.total_bill_amount))}</p>
+                    <div className="col-span-2">
+                      <p className="text-[10px] font-bold text-text-muted uppercase tracking-widest">Total Bill Amount</p>
+                      <p className="text-xl text-accent-green font-bold font-space">{formatCurrency(formData.total_bill_amount)}</p>
                     </div>
                   </div>
                 </div>
 
-                <div className="flex flex-col gap-3">
+                <div className="flex flex-col gap-3 pt-4">
                   <div className="flex justify-between gap-4">
                     <GradientButton variant="outline" onClick={prevStep} className="flex-1 gap-2">
                       <ChevronLeft size={18} /> Back
@@ -297,12 +419,9 @@ export const NewClaimPage: React.FC = () => {
                       Save as Draft
                     </GradientButton>
                   </div>
-                  <button 
-                    onClick={() => handleSubmit('SUBMITTED')}
-                    className="w-full bg-accent-purple hover:bg-opacity-90 py-4 rounded-xl text-white font-bold text-lg transition-all"
-                  >
+                  <GradientButton onClick={() => handleSubmit('SUBMITTED')} className="w-full py-4 text-lg">
                     Submit Claim
-                  </button>
+                  </GradientButton>
                 </div>
               </motion.div>
             )}

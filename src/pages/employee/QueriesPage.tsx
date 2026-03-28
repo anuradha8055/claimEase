@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { PageTransition } from '../../components/layout/PageTransition';
 import { GlassCard } from '../../components/ui/GlassCard';
@@ -14,7 +15,13 @@ export const QueriesPage: React.FC = () => {
   const [selectedQuery, setSelectedQuery] = useState<any | null>(null);
   const [responseText, setResponseText] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [uploadQuery, setUploadQuery] = useState<any | null>(null);
+  const [uploadFile, setUploadFile] = useState<File | null>(null);
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const file = e.target.files?.[0];
+  if (file) setUploadFile(file);
+};
   useEffect(() => {
     // Mock data
     const mockQueries: any[] = [
@@ -101,7 +108,15 @@ export const QueriesPage: React.FC = () => {
                         <p className="text-sm text-text-primary leading-relaxed">{query.query_description}</p>
                       </div>
 
-                      <div className="flex justify-end">
+                      <div className="flex justify-end gap-3">
+                        <GradientButton 
+                        variant="outline"
+                        className="text-xs px-6 py-2 gap-2"
+                        onClick={() => setUploadQuery(query)}
+                        >
+                          Upload Document
+                         </GradientButton>
+
                         <GradientButton 
                           variant="warning" 
                           className="text-xs px-6 py-2 gap-2"
@@ -130,14 +145,13 @@ export const QueriesPage: React.FC = () => {
                 className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60]"
               />
               <motion.div
-                initial={{ y: '100%' }}
-                animate={{ y: 0 }}
-                exit={{ y: '100%' }}
-                transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                className="fixed bottom-0 left-0 right-0 bg-secondary-bg border-t border-white/10 rounded-t-[32px] p-8 z-[70] max-w-2xl mx-auto shadow-2xl"
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                className="fixed inset-0 flex items-center justify-center z-[70]"
               >
-                <div className="w-12 h-1.5 bg-white/10 rounded-full mx-auto mb-8" />
-                
+                {/* <div className="w-12 h-1.5 bg-white/10 rounded-full mx-auto mb-8" /> */}
+                <div className="bg-secondary-bg border border-white/10 rounded-2xl p-8 w-full max-w-md shadow-2xl"></div>
                 <div className="space-y-6">
                   <header>
                     <h2 className="text-xl font-bold text-white font-space">Respond to Query</h2>
@@ -183,6 +197,91 @@ export const QueriesPage: React.FC = () => {
               </motion.div>
             </>
           )}
+          <AnimatePresence>
+  {uploadQuery && (
+    <>
+      {/* Background Overlay */}
+      <motion.div 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        onClick={() => setUploadQuery(null)}
+        className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60]"
+      />
+
+      {/* CENTER WRAPPER */}
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.9 }}
+        className="fixed inset-0 flex items-center justify-center z-[70]"
+      >
+        {/* ACTUAL BOX */}
+        <div className="bg-secondary-bg border border-white/10 rounded-2xl p-8 w-full max-w-xl shadow-2xl space-y-6">
+
+          <h2 className="text-xl font-bold text-white text-center">
+            Upload Document for {uploadQuery.claim_number}
+          </h2>
+
+          {/* Drag Drop */}
+          <div
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={(e) => {
+              e.preventDefault();
+              const file = e.dataTransfer.files[0];
+              if (file) setUploadFile(file);
+            }}
+            onClick={() => document.getElementById('queryFileInput')?.click()}
+            className="border-2 border-dashed border-white/10 rounded-2xl p-10 text-center cursor-pointer hover:border-white/20 transition"
+          >
+            <input 
+              id="queryFileInput"
+              type="file"
+              onChange={handleFileChange}
+              className="hidden"
+            />
+
+            <p className="text-sm font-bold text-text-primary">
+              {uploadFile ? uploadFile.name : "Click or drag to upload"}
+            </p>
+
+            <p className="text-xs text-text-muted mt-1">
+              PDF, JPG, PNG — max 10MB
+            </p>
+          </div>
+
+          {/* Buttons */}
+          <div className="flex gap-4">
+            <GradientButton 
+              variant="outline" 
+              fullWidth 
+              onClick={() => setUploadQuery(null)}
+            >
+              Cancel
+            </GradientButton>
+
+            <GradientButton 
+              fullWidth 
+              onClick={() => {
+                if (!uploadFile) {
+                  toast.error("Please select a file");
+                  return;
+                }
+                toast.success("Document uploaded successfully");
+                setUploadQuery(null);
+                setUploadFile(null);
+              }}
+            >
+              Upload
+            </GradientButton>
+          </div>
+
+        </div>
+      </motion.div>
+    </>
+  )}
+</AnimatePresence>
+          
         </AnimatePresence>
       </div>
     </PageTransition>

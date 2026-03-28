@@ -20,6 +20,7 @@ import { DDOSanctionedPage } from './pages/officer/DDOSanctionedPage';
 import { AnimatePresence } from 'motion/react';
 import { SignupPage } from './pages/signupPage';
 
+
 export default function App() {
   return (
     <AuthProvider>
@@ -43,6 +44,7 @@ export default function App() {
             <Route path="/login" element={<LoginPage />} />
 
             <Route path="/signup" element={<SignupPage />} />
+
             
             {/* Employee Routes */}
             <Route element={<ProtectedRoute allowedRoles={['EMPLOYEE']} />}>
