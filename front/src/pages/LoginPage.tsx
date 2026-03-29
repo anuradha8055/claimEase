@@ -109,6 +109,21 @@ export const LoginPage: React.FC = () => {
             <GradientButton fullWidth loading={loading} type="submit">
               Sign In
             </GradientButton>
+
+            <div className="text-center">
+  <p className="text-sm text-text-muted mt-2">
+    Don’t have an account?
+  </p>
+
+  <button
+    type="button"
+    onClick={() => navigate('/signup')}
+    className="text-accent-purple text-sm font-bold hover:underline mt-1"
+  >
+    Sign Up
+  </button>
+</div>
+
           </form>
 
           <div className="mt-8 pt-6 border-t border-white/5">

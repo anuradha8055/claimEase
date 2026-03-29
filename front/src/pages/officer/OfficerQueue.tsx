@@ -50,6 +50,7 @@ export const OfficerQueue: React.FC = () => {
         employee_id: 10,
         hospital_id: 601,
         claim_number: 'CLM-2026-045',
+        // patient_name: 'Rahul Sharma',   // ✅ ADD THIS
         admission_date: '2026-03-01',
         discharge_date: '2026-03-05',
         diagnosis: 'Cardiac Procedure',
@@ -65,6 +66,7 @@ export const OfficerQueue: React.FC = () => {
         employee_id: 11,
         hospital_id: 602,
         claim_number: 'CLM-2026-048',
+        // patient_name: 'Sneha Patil',   // ✅ ADD THIS
         admission_date: '2026-03-10',
         discharge_date: '2026-03-12',
         diagnosis: 'Maternity Care',
@@ -189,6 +191,7 @@ export const OfficerQueue: React.FC = () => {
               <thead>
                 <tr className="bg-white/5 text-[10px] font-bold text-text-muted uppercase tracking-[0.2em]">
                   <th className="px-6 py-4">Claim #</th>
+                  <th className="px-6 py-4">Patient Name</th> {/* ✅ NEW */}
                   <th className="px-6 py-4">Employee</th>
                   <th className="px-6 py-4">Hospital</th>
                   <th className="px-6 py-4">Amount</th>
@@ -209,6 +212,12 @@ export const OfficerQueue: React.FC = () => {
                     <td className="px-6 py-4">
                       <span className="font-mono text-xs text-accent-purple font-medium">{claim.claim_number}</span>
                     </td>
+                    <td className="px-6 py-4">
+                      <p className="text-sm text-text-primary font-medium">
+                        {claim.patient_name}
+                        </p>
+                    </td>
+
                     <td className="px-6 py-4">
                       <p className="text-sm text-text-primary">EMP-{claim.employee_id}</p>
                       <p className="text-[10px] text-text-muted">ID: {claim.employee_id}</p>

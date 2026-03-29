@@ -31,6 +31,8 @@ export const DocumentUploadPage: React.FC = () => {
   const [aiAnalysis, setAiAnalysis] = useState<AIAnalysisResult | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [hospitalName, setHospitalName] = useState('');
+  const [patientName, setPatientName] = useState('');
 
   const docTypes = [
     { id: '1', label: 'Hospital Bill' },
@@ -149,6 +151,30 @@ export const DocumentUploadPage: React.FC = () => {
                   placeholder="Enter Claim ID (e.g. 101)"
                 />
               </div>
+              {/* Patient Name */}
+  <div className="space-y-2">
+    <label className="text-xs font-bold text-text-muted uppercase tracking-widest">Hospital ID</label>
+    <input
+      type="text"
+      value={hospitalName}
+      onChange={(e) => setHospitalName(e.target.value)}
+      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-text-primary"
+      placeholder="Enter Hospital ID"
+    />
+  </div>
+
+              {/* Hospital Name */}
+  <div className="space-y-2">
+    <label className="text-xs font-bold text-text-muted uppercase tracking-widest">Hospital Name</label>
+    <input
+      type="text"
+      value={hospitalName}
+      onChange={(e) => setHospitalName(e.target.value)}
+      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-text-primary"
+      placeholder="Enter Hospital Name"
+    />
+  </div>
+
 
               <div className="space-y-2">
                 <label className="text-xs font-bold text-text-muted uppercase tracking-widest">Document Type</label>

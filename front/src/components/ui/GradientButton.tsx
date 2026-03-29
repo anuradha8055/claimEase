@@ -15,6 +15,7 @@ export const GradientButton: React.FC<GradientButtonProps> = ({
   loading = false,
   className,
   disabled,
+   onClick,
   ...props
 }) => {
   const variants = {
@@ -27,6 +28,7 @@ export const GradientButton: React.FC<GradientButtonProps> = ({
 
   return (
     <motion.button
+    onClick={onClick}
       whileHover={{ translateY: -2 }}
       whileTap={{ scale: 0.98 }}
       className={cn(

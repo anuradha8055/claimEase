@@ -17,13 +17,27 @@ import {
 } from 'lucide-react';
 import { format, differenceInDays } from 'date-fns';
 import toast from 'react-hot-toast';
+import { address } from 'motion/react-client';
 
 export const NewClaimPage: React.FC = () => {
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
-    hospital_id: '',
+    // new 
+    patient_name: '',
+    relation: '',
+    birth_date: '',
+    gender: '',
     diagnosis: '',
+
+    // EXISTING
+    hospital_id: '',
+    hospital_name: '',
+    hospital_address: '',
+    doctor_name: '',
+    doctor_qualification: '',
+    treatment_details: '',
+
     admission_date: '',
     discharge_date: '',
     total_bill_amount: '',
@@ -56,12 +70,17 @@ export const NewClaimPage: React.FC = () => {
     }, 1500);
   };
 
+  // const steps = [
+    // { id: 1, title: 'Hospital & Dates', icon: Hospital },
+    // { id: 2, title: 'Financial Details', icon: IndianRupee },
+    // { id: 3, title: 'Review & Submit', icon: CheckCircle2 },
+  // ];
   const steps = [
-    { id: 1, title: 'Hospital & Dates', icon: Hospital },
-    { id: 2, title: 'Financial Details', icon: IndianRupee },
-    { id: 3, title: 'Review & Submit', icon: CheckCircle2 },
-  ];
-
+  { id: 1, title: 'Patient Details', icon: Info },
+  { id: 2, title: 'Hospital & Dates', icon: Hospital },
+  { id: 3, title: 'Financial Details', icon: IndianRupee },
+  { id: 4, title: 'Review & Submit', icon: CheckCircle2 },
+    ];
   return (
     <PageTransition>
       <div className="max-w-3xl mx-auto space-y-8">
@@ -104,8 +123,92 @@ export const NewClaimPage: React.FC = () => {
         <GlassCard className="p-8">
           <AnimatePresence mode="wait">
             {step === 1 && (
+  <motion.div
+    key="step0"
+    initial={{ opacity: 0, x: 20 }}
+    animate={{ opacity: 1, x: 0 }}
+    exit={{ opacity: 0, x: -20 }}
+    className="space-y-6"
+  >
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+      <div className="space-y-2">
+        <label className="text-xs font-bold text-text-muted uppercase">Patient Name</label>
+        <input
+          type="text"
+          name="patient_name"
+          value={formData.patient_name}
+          onChange={handleInputChange}
+          className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-text-primary"
+          placeholder="Enter patient name"
+        />
+      </div>
+
+      <div className="space-y-2">
+        <label className="text-xs font-bold text-text-muted uppercase">Relation</label>
+        <input
+          type="text"
+          name="relation"
+          value={formData.relation}
+          onChange={handleInputChange}
+          className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-text-primary"
+          placeholder="e.g. Father, Mother"
+        />
+      </div>
+
+      <div className="space-y-2">
+        <label className="text-xs font-bold text-text-muted uppercase">Birth Date</label>
+        <input
+          type="date"
+          name="birth_date"
+          value={formData.birth_date}
+          onChange={handleInputChange}
+          className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-text-primary"
+        />
+      </div>
+
+      <div className="space-y-2">
+        <label className="text-xs font-bold text-text-muted uppercase">Gender</label>
+        <select
+          name="gender"
+          value={formData.gender}
+          onChange={handleInputChange}
+          // className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-text-primary"
+          className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-accent-purple"
+        >
+          {/* <option value="">Select Gender</option> */}
+          {/* <option value="Male">Male</option> */}
+          {/* <option value="Female">Female</option> */}
+          <option value="" className="text-black">Select Gender</option>
+          <option value="Male" className="text-black">Male</option>
+          <option value="Female" className="text-black">Female</option>
+        </select>
+      </div>
+
+      <div className="md:col-span-2 space-y-2">
+        <label className="text-xs font-bold text-text-muted uppercase">Diagnosis</label>
+        <input
+          type="text"
+          name="diagnosis"
+          value={formData.diagnosis}
+          onChange={handleInputChange}
+          className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-text-primary"
+          placeholder="Enter diagnosis"
+        />
+      </div>
+
+    </div>
+
+    <div className="flex justify-end pt-4">
+      <GradientButton onClick={nextStep}>
+        Next Step <ChevronRight size={18} />
+      </GradientButton>
+    </div>
+  </motion.div>
+)}
+            {step === 2 && (
               <motion.div
-                key="step1"
+                key="step2"
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
@@ -134,6 +237,69 @@ export const NewClaimPage: React.FC = () => {
                       placeholder="e.g. Acute Appendicitis"
                     />
                   </div>
+                  {/* Hospital Name */}
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-text-muted uppercase">Hospital Name</label>
+                    <input
+    type="text"
+    name="hospital_name"
+    value={formData.hospital_name}
+    onChange={handleInputChange}
+    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-text-primary"
+    placeholder="Enter hospital name"
+  />
+</div>
+
+{/* Hospital Address */}
+<div className="space-y-2">
+  <label className="text-xs font-bold text-text-muted uppercase">Hospital Address</label>
+  <input
+    type="text"
+    name="hospital_address"
+    value={formData.hospital_address}
+    onChange={handleInputChange}
+    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-text-primary"
+    placeholder="Enter hospital address"
+  />
+</div>
+
+{/* Doctor Name */}
+<div className="space-y-2">
+  <label className="text-xs font-bold text-text-muted uppercase">Doctor Name</label>
+  <input
+    type="text"
+    name="doctor_name"
+    value={formData.doctor_name}
+    onChange={handleInputChange}
+    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-text-primary"
+    placeholder="Enter doctor name"
+  />
+</div>
+
+{/* Doctor Qualification */}
+<div className="space-y-2">
+  <label className="text-xs font-bold text-text-muted uppercase">Doctor Qualification</label>
+  <input
+    type="text"
+    name="doctor_qualification"
+    value={formData.doctor_qualification}
+    onChange={handleInputChange}
+    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-text-primary"
+    placeholder="e.g. MBBS, MD"
+  />
+</div>
+
+{/* Treatment Taken */}
+<div className="md:col-span-2 space-y-2">
+  <label className="text-xs font-bold text-text-muted uppercase">Treatment Taken</label>
+  <textarea
+    name="treatment_taken"
+    value={formData.treatment_taken}
+    onChange={handleInputChange}
+    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-text-primary"
+    placeholder="Describe treatment"
+  />
+</div>
                   <div className="space-y-2">
                     <label className="text-xs font-bold text-text-muted uppercase tracking-widest">Admission Date</label>
                     <input
@@ -169,13 +335,15 @@ export const NewClaimPage: React.FC = () => {
                   <GradientButton onClick={nextStep} className="gap-2">
                     Next Step <ChevronRight size={18} />
                   </GradientButton>
+                
                 </div>
               </motion.div>
+              
             )}
 
-            {step === 2 && (
+            {step === 3 && (
               <motion.div
-                key="step2"
+                key="step3"
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
@@ -209,9 +377,9 @@ export const NewClaimPage: React.FC = () => {
               </motion.div>
             )}
 
-            {step === 3 && (
+            {step === 4 && (
               <motion.div
-                key="step3"
+                key="step4"
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}

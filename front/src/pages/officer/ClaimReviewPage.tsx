@@ -35,7 +35,7 @@ import {
   Calendar
 } from 'lucide-react';
 import { format, differenceInDays } from 'date-fns';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';;
 import toast from 'react-hot-toast';
 
 export const ClaimReviewPage: React.FC = () => {
@@ -52,6 +52,11 @@ export const ClaimReviewPage: React.FC = () => {
   const [showSanctionConfirm, setShowSanctionConfirm] = useState(false);
   const [showSuccessAnimation, setShowSuccessAnimation] = useState(false);
   const [expandedDoc, setExpandedDoc] = useState<number | null>(null);
+  const [actionType, setActionType] = useState<'APPROVE' | 'REJECT' | 'QUERY' | null>(null);
+  const [showRejectModal, setShowRejectModal] = useState(false);
+  const [rejectReason, setRejectReason] = useState('');
+  const [showQueryModal, setShowQueryModal] = useState(false);
+  const [queryText, setQueryText] = useState('');
 
   useEffect(() => {
     // Mock data fetching
@@ -113,9 +118,9 @@ export const ClaimReviewPage: React.FC = () => {
           system_calculated: 165000,
           claimed_amount: 185000,
           breakdown: [
-            { rule: 'R101', category: 'Surgery', cap: 100000, applied_amount: 100000 },
-            { rule: 'R102', category: 'Ward Charges', cap: 5000, applied_amount: 20000 },
-            { rule: 'R103', category: 'Medicine', cap: 50000, applied_amount: 45000 },
+            { rule: 'R101', category: 'Surgery', cap: 100000, applied_amount: 100000, approved_amount: 100000 },
+            { rule: 'R102', category: 'Ward Charges', cap: 5000, applied_amount: 20000, approved_amount: 5000 },
+            { rule: 'R103', category: 'Medicine', cap: 50000, applied_amount: 45000, approved_amount: 45000 },
           ]
         });
       }
@@ -126,22 +131,41 @@ export const ClaimReviewPage: React.FC = () => {
     fetchData();
   }, [id, user?.role]);
 
-  const handleAction = async (action: 'APPROVE' | 'REJECT' | 'QUERY') => {
-    setActionLoading(true);
+  // const handleAction = async (action: 'APPROVE' | 'REJECT' | 'QUERY' |) => {
+    // setActionLoading(true);
     // Mock API call
-    setTimeout(() => {
-      setActionLoading(false);
-      setShowSuccessAnimation(true);
-      setTimeout(() => {
-        setShowSuccessAnimation(false);
-        const rolePrefix = user?.role === 'SCRUTINY_OFFICER' ? 'scrutiny' : 
-                          user?.role === 'MEDICAL_OFFICER' ? 'medical' : 
-                          user?.role === 'FINANCE_OFFICER' ? 'finance' : 'ddo';
-        navigate(`/${rolePrefix}/queue`);
-      }, 1500);
-    }, 1500);
-  };
+    // setTimeout(() => {
+      // setActionLoading(false);
+      // setShowSuccessAnimation(true);
+      // setTimeout(() => {
+        // setShowSuccessAnimation(false);
+        // const rolePrefix = user?.role === 'SCRUTINY_OFFICER' ? 'scrutiny' : 
+                          // user?.role === 'MEDICAL_OFFICER' ? 'medical' : 
+                          // user?.role === 'FINANCE_OFFICER' ? 'finance' : 'ddo';
+        // navigate(`/${rolePrefix}/queue`);
+      // }, 1500);
+    // }, 1500);
+  // };
+  const handleAction = async (action: 'APPROVE' | 'REJECT' | 'QUERY') => {
+  setActionLoading(true);
+  setActionType(action); // ✅ store which action
 
+  setTimeout(() => {
+    setActionLoading(false);
+    setShowSuccessAnimation(true);
+
+    setTimeout(() => {
+      setShowSuccessAnimation(false);
+
+      const rolePrefix =
+        user?.role === 'SCRUTINY_OFFICER' ? 'scrutiny' :
+        user?.role === 'MEDICAL_OFFICER' ? 'medical' :
+        user?.role === 'FINANCE_OFFICER' ? 'finance' : 'ddo';
+
+      navigate(`/${rolePrefix}/queue`);
+    }, 1500);
+  }, 1500);
+};
   if (loading || !claim) return null;
 
   return (
@@ -372,6 +396,7 @@ export const ClaimReviewPage: React.FC = () => {
                         <th className="px-4 py-3">Category</th>
                         <th className="px-4 py-3 text-right">Cap</th>
                         <th className="px-4 py-3 text-right">Applied</th>
+                        <th className="px-4 py-3 text-right">Approved</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-white/5">
@@ -381,6 +406,7 @@ export const ClaimReviewPage: React.FC = () => {
                           <td className="px-4 py-3 text-text-primary">{item.category}</td>
                           <td className="px-4 py-3 text-right text-text-muted">{formatCurrency(item.cap)}</td>
                           <td className="px-4 py-3 text-right text-white font-bold">{formatCurrency(item.applied_amount)}</td>
+                          <td className="px-4 py-3 text-right text-white font-bold">{formatCurrency(item.approved_amount)}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -421,6 +447,18 @@ export const ClaimReviewPage: React.FC = () => {
                     <label className="text-[10px] font-bold text-text-muted uppercase tracking-widest">Override Amount (Optional)</label>
                     <input type="number" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-text-primary focus:outline-none focus:border-accent-purple" placeholder="₹ 0.00" />
                   </div>
+                  <div className="pt-6">
+                 <GradientButton
+              fullWidth
+              className="py-3 text-lg"
+             onClick={() => {
+               toast.success('Amount submitted successfully');
+           handleAction('APPROVE');
+              }}
+                >
+    Submit Final Amount
+  </GradientButton>
+</div>
                   <div className="space-y-2">
                     <label className="text-[10px] font-bold text-text-muted uppercase tracking-widest">Override Reason</label>
                     <textarea className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-text-primary focus:outline-none focus:border-accent-purple h-[46px] resize-none" placeholder="Reason for override..." />
@@ -441,10 +479,10 @@ export const ClaimReviewPage: React.FC = () => {
                     <GradientButton variant="success" fullWidth className="gap-2" onClick={() => handleAction('APPROVE')}>
                       <Check size={18} /> Approve — Documents Verified
                     </GradientButton>
-                    <GradientButton variant="outline" fullWidth className="gap-2 border-accent-amber/30 text-accent-amber hover:bg-accent-amber/5" onClick={() => handleAction('QUERY')}>
+                    <GradientButton variant="outline" fullWidth className="gap-2 border-accent-amber/30 text-accent-amber hover:bg-accent-amber/5" onClick={() => setShowQueryModal(true)}>
                       <MessageSquare size={18} /> Raise Query
                     </GradientButton>
-                    <GradientButton variant="outline" fullWidth className="gap-2 border-accent-red/30 text-accent-red hover:bg-accent-red/5" onClick={() => handleAction('REJECT')}>
+                    <GradientButton variant="outline" fullWidth className="gap-2 border-accent-red/30 text-accent-red hover:bg-accent-red/5" onClick={() => setShowRejectModal(true)}>
                       <X size={18} /> Reject Claim
                     </GradientButton>
                   </div>
@@ -455,10 +493,10 @@ export const ClaimReviewPage: React.FC = () => {
                     <GradientButton variant="success" fullWidth className="gap-2" onClick={() => handleAction('APPROVE')}>
                       <Check size={18} /> Approve — Treatment Valid
                     </GradientButton>
-                    <GradientButton variant="outline" fullWidth className="gap-2 border-accent-amber/30 text-accent-amber hover:bg-accent-amber/5" onClick={() => handleAction('QUERY')}>
+                    <GradientButton variant="outline" fullWidth className="gap-2 border-accent-amber/30 text-accent-amber hover:bg-accent-amber/5" onClick={() => setShowQueryModal(true)}>
                       <MessageSquare size={18} /> Raise Query
                     </GradientButton>
-                    <GradientButton variant="outline" fullWidth className="gap-2 border-accent-red/30 text-accent-red hover:bg-accent-red/5" onClick={() => handleAction('REJECT')}>
+                    <GradientButton variant="outline" fullWidth className="gap-2 border-accent-red/30 text-accent-red hover:bg-accent-red/5" onClick={() => setShowRejectModal(true)}>
                       <X size={18} /> Reject Claim
                     </GradientButton>
                   </div>
@@ -469,7 +507,7 @@ export const ClaimReviewPage: React.FC = () => {
                     <GradientButton variant="success" fullWidth className="gap-2" onClick={() => handleAction('APPROVE')}>
                       <IndianRupee size={18} /> Approve with Calculated Amount
                     </GradientButton>
-                    <GradientButton variant="outline" fullWidth className="gap-2 border-accent-red/30 text-accent-red hover:bg-accent-red/5" onClick={() => handleAction('REJECT')}>
+                    <GradientButton variant="outline" fullWidth className="gap-2 border-accent-red/30 text-accent-red hover:bg-accent-red/5" onClick={() =>setShowRejectModal(true)}>
                       <X size={18} /> Reject Claim
                     </GradientButton>
                   </div>
@@ -483,6 +521,15 @@ export const ClaimReviewPage: React.FC = () => {
                     </div>
                     
                     {!showSanctionConfirm ? (
+                      <div className="space-y-2">
+                        <GradientButton
+  variant="outline"
+  fullWidth
+  className="gap-2 border-accent-red/30 text-accent-red hover:bg-accent-red/5"
+  onClick={() => setShowRejectModal(true)}
+>
+  <X size={18} /> Reject Claim
+</GradientButton>
                       <GradientButton 
                         fullWidth 
                         className="py-4 text-lg bg-linear-to-br from-accent-violet to-accent-purple"
@@ -490,6 +537,7 @@ export const ClaimReviewPage: React.FC = () => {
                       >
                         <Stamp className="mr-2" size={24} /> Grant Final Sanction
                       </GradientButton>
+                      </div>
                     ) : (
                       <motion.div 
                         initial={{ opacity: 0, scale: 0.95 }}
@@ -587,11 +635,93 @@ export const ClaimReviewPage: React.FC = () => {
               transition={{ delay: 0.8 }}
               className="text-2xl font-bold text-white font-space text-center"
             >
-              Claim {claim.claim_number} approved<br />and forwarded!
+              {/* Claim {claim.claim_number} approved<br />and forwarded! */}
+              {actionType === 'APPROVE' && `Claim ${claim.claim_number} approved and forwarded!`}
+              {actionType === 'QUERY' && `Query raised for claim ${claim.claim_number}`}
+              {actionType === 'REJECT' && `Claim ${claim.claim_number} rejected`}     
             </motion.h2>
           </motion.div>
         )}
       </AnimatePresence>
+      {showRejectModal && (
+      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
+      <div className="bg-primary-bg border border-white/10 rounded-2xl p-6 w-[400px] space-y-4">
+      
+      <h3 className="text-lg font-bold text-white">Reject Claim</h3>
+
+      <textarea
+        placeholder="Enter reason for rejection..."
+        value={rejectReason}
+        onChange={(e) => setRejectReason(e.target.value)}
+        className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-text-primary focus:outline-none focus:border-accent-red"
+      />
+
+      <div className="flex gap-3">
+        <button
+          onClick={() => setShowRejectModal(false)}
+          className="flex-1 py-2 rounded-xl border border-white/10 text-text-secondary hover:bg-white/5"
+        >
+          Cancel
+        </button>
+
+        <button
+          onClick={() => {
+            if (!rejectReason.trim()) {
+             toast.error("Please enter a reason");
+              return;
+            }
+            setShowRejectModal(false);
+            handleAction('REJECT');
+          }}
+          className="flex-1 py-2 rounded-xl bg-accent-red text-white font-bold hover:opacity-90"
+        >
+          Confirm Reject
+        </button>
+      </div>
+
+    </div>
+  </div>
+)}
+{/* ✅ Query Modal */}
+{showQueryModal && (
+  <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
+    <div className="bg-primary-bg border border-white/10 rounded-2xl p-6 w-[400px] space-y-4">
+      
+      <h3 className="text-lg font-bold text-white">Raise Query</h3>
+
+      <textarea
+        placeholder="Enter reason for query..."
+        value={queryText}
+        onChange={(e) => setQueryText(e.target.value)}
+        className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-text-primary focus:outline-none focus:border-accent-amber"
+      />
+
+      <div className="flex gap-3">
+        <button
+          onClick={() => setShowQueryModal(false)}
+          className="flex-1 py-2 rounded-xl border border-white/10 text-text-secondary hover:bg-white/5"
+        >
+          Cancel
+        </button>
+
+        <button
+          onClick={() => {
+            if (!queryText.trim()) {
+              toast.error("Please enter a query");
+              return;
+            }
+            setShowQueryModal(false);
+            handleAction('QUERY');
+          }}
+          className="flex-1 py-2 rounded-xl bg-accent-amber text-black font-bold hover:opacity-90"
+        >
+          Submit Query
+        </button>
+      </div>
+
+    </div>
+  </div>
+)}
     </PageTransition>
   );
 };

@@ -18,6 +18,8 @@ import { OfficerQueue } from './pages/officer/OfficerQueue';
 import { ClaimReviewPage } from './pages/officer/ClaimReviewPage';
 import { DDOSanctionedPage } from './pages/officer/DDOSanctionedPage';
 import { AnimatePresence } from 'motion/react';
+import { SignupPage } from './pages/signupPage';
+
 
 export default function App() {
   return (
@@ -37,7 +39,12 @@ export default function App() {
         />
         <AnimatePresence mode="wait">
           <Routes>
+
+            
             <Route path="/login" element={<LoginPage />} />
+
+            <Route path="/signup" element={<SignupPage />} />
+
             
             {/* Employee Routes */}
             <Route element={<ProtectedRoute allowedRoles={['EMPLOYEE']} />}>

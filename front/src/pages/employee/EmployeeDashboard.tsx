@@ -169,7 +169,8 @@ export const EmployeeDashboard: React.FC = () => {
               <thead>
                 <tr className="bg-white/5 text-[10px] font-bold text-text-muted uppercase tracking-[0.2em]">
                   <th className="px-6 py-4">Claim #</th>
-                  <th className="px-6 py-4">Hospital</th>
+              
+                  <th className="px-6 py-4">Diagnosis</th> 
                   <th className="px-6 py-4">Dates</th>
                   <th className="px-6 py-4">Amount</th>
                   <th className="px-6 py-4">Status</th>
@@ -189,10 +190,16 @@ export const EmployeeDashboard: React.FC = () => {
                     <td className="px-6 py-4">
                       <span className="font-mono text-xs text-accent-purple font-medium">{claim.claim_number}</span>
                     </td>
-                    <td className="px-6 py-4">
+                    {/* <td className="px-6 py-4">
                       <p className="text-sm text-text-primary">Hosp ID: {claim.hospital_id}</p>
                       <p className="text-xs text-text-muted truncate max-w-[150px]">{claim.diagnosis}</p>
-                    </td>
+                    </td> */}
+                    
+                    {/* change */}
+                    <td className="px-6 py-4">
+  {/* showing diagnosis instead of hospital */}
+  <p className="text-sm text-text-primary">{claim.diagnosis}</p>
+</td>
                     <td className="px-6 py-4">
                       <p className="text-xs text-text-primary">{format(new Date(claim.admission_date), 'MMM dd')}</p>
                       <p className="text-[10px] text-text-muted">to {format(new Date(claim.discharge_date), 'MMM dd, yyyy')}</p>
