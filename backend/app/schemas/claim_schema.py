@@ -1,41 +1,43 @@
+from pydantic import BaseModel, Field, ConfigDict
 from datetime import date, datetime
+from typing import Optional, List
 from decimal import Decimal
-from typing import Optional
-from pydantic import BaseModel, ConfigDict, Field
+from app.models.claim_model import ClaimStatus
 
+# --- Base Shared Fields ---
+class ClaimBase(BaseModel):
+    admission_date: date
+    discharge_date: date
+    diagnosis: str
+    is_emergency: bool = False
+    total_bill_amount: Decimal = Field(..., max_digits=12, decimal_places=2)
+    claimed_amount: Decimal = Field(..., max_digits=12, decimal_places=2)
+    hospital_id: int
 
-class ClaimCreate(BaseModel):
-    hospital_id:       int
-    admission_date:    date
-    discharge_date:    date
-    diagnosis:         str | None = None
-    total_bill_amount: Decimal    = Field(gt=0, le=10_000_000, decimal_places=2)
-    claimed_amount:    Decimal    = Field(gt=0, le=10_000_000, decimal_places=2)
+# --- For the EMPLOYEE: Creating a claim ---
+class ClaimCreate(ClaimBase):
+    pass # Employees only fill the Base fields initially
 
+# --- For the MEDICAL OFFICER: Approving/Calculating amount ---
+class ClaimMedicalUpdate(BaseModel):
+    eligible_amount: Decimal = Field(..., max_digits=12, decimal_places=2)
+    remarks: str = Field(..., min_length=5) # Why was this amount approved?
+    status: ClaimStatus = ClaimStatus.MEDICAL_APPROVED
 
-class ClaimResponse(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
+# --- For the SCRUTINY OFFICER: Initial Verification ---
+class ClaimScrutinyUpdate(BaseModel):
+    is_verified: bool
+    remarks: str
+    status: ClaimStatus # SCRUTINY_APPROVED or QUERY_RAISED
 
-    claim_id:          int
-    employee_id:       int
-    hospital_id:       int
-    claim_number:      Optional[str]
-    admission_date:    date
-    discharge_date:    date
-    diagnosis:         Optional[str]
-    total_bill_amount: Decimal
-    claimed_amount:    Decimal
-    eligible_amount:   Optional[Decimal]
-    claim_status:      str
-    current_stage:     str
-    created_at:        datetime
-    updated_at:        datetime
-
-
-class ClaimStatusResponse(BaseModel):
-    """Lightweight status tracker response for employee-facing tracker."""
-    claim_id:      int
-    claim_number:  Optional[str]
-    claim_status:  str
-    current_stage: str
-    updated_at:    datetime
+# --- For the READ/VIEW (Response to Frontend) ---
+class ClaimRead(ClaimBase):
+    claim_id: int
+    claim_number: Optional[str] = None
+    eligible_amount: Optional[Decimal] = None
+    claim_status: ClaimStatus
+    employee_id: int
+    created_at: datetime
+    updated_at: datetime
+    
+    model_config = ConfigDict(from_attributes=True) # Allows Pydantic to read SQLAlchemy objects

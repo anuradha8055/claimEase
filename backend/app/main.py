@@ -6,7 +6,7 @@ from app.models import *  # registers all models with Base
 
 # Import all routers
 from app.routes.auth_routes     import router as auth_router
-from app.routes.claim_routes    import router as claim_router
+from claimEase.backend.app.routes.employee_routes    import router as claim_router
 from app.routes.document_routes import router as document_router
 from app.routes.scrutiny_routes import router as scrutiny_router
 from app.routes.medical_routes  import router as medical_router

@@ -1,16 +1,18 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
+from decimal import Decimal
+from typing import Optional
 
-class EmployeeCreate(BaseModel):
-    user_id: int
+class EmployeeBase(BaseModel):
     department: str
     designation: str
+    pay_level: Optional[int] = None
+    grade_pay: Optional[Decimal] = None
 
+class EmployeeCreate(EmployeeBase):
+    user_id: int
 
-class EmployeeResponse(BaseModel):
+class EmployeeResponse(EmployeeBase):
     employee_id: int
     user_id: int
-    department: str
-    designation: str
-
-    class Config:
-        from_attributes = True
+    
+    model_config = ConfigDict(from_attributes=True)
