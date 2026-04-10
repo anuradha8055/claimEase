@@ -28,7 +28,7 @@ def my_pending_queries(
         db.query(Query)
         .join(Claim, Query.claim_id == Claim.claim_id)
         .filter(
-            Claim.employee_id == employee.employee_id,
+            Claim.employeeId == employee.employeeId,
             Query.status == "PENDING"
         )
         .all()

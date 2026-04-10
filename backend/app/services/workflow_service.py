@@ -3,7 +3,7 @@ from fastapi import HTTPException, status
 from datetime import datetime
 from app.models.claim_model import Claim, ClaimStatus, CLAIM_TRANSITIONS
 from app.models.workflow_model import ClaimWorkflowLog
-from app.models.notification_model import Notification
+from app.models.notifications_model import Notification
 
 class WorkflowService:
     @staticmethod
@@ -84,3 +84,27 @@ class WorkflowService:
         db.commit()
         db.refresh(claim)
         return claim
+
+
+def transition(db: Session, claim_id: int, to_status: ClaimStatus, current_user, remarks: str = None):
+    """
+    Convenience function for claim transitions. Extracts user_id and role_id from current_user.
+    
+    Args:
+        db: Database session
+        claim_id: ID of the claim to transition
+        to_status: Target ClaimStatus
+        current_user: User object with user_id and role_id attributes
+        remarks: Optional remarks for the transition
+    
+    Returns:
+        Updated Claim object
+    """
+    return WorkflowService.move_claim(
+        db=db,
+        claim_id=claim_id,
+        current_user_id=current_user.user_id,
+        user_role_id=current_user.role_id,
+        to_status=to_status,
+        remarks=remarks
+    )

@@ -6,7 +6,7 @@ from app.core.dependencies import get_current_user, get_current_employee
 from app.models.user_model import User
 from app.schemas.claim_schema import ClaimCreate, ClaimResponse, ClaimStatusResponse
 from app.services import claim_service
-
+from app.models.claim_model import Claim # A
 router = APIRouter(prefix="/claims", tags=["Claims"])
 
 
@@ -64,3 +64,11 @@ def claim_status(
         current_stage = claim.current_stage.value,
         updated_at    = claim.updated_at,
     )
+
+@router.get("/my-claims", response_model=list[ClaimResponse])
+def get_my_claims(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_employee)
+):
+    """Get all claims created by the current employee."""
+    return db.query(Claim).filter(Claim.employeeID == current_user.user_id).all()

@@ -5,7 +5,7 @@ from app.config.database import Base
 class Employee(Base):
     __tablename__ = "employees"
 
-    employee_id   = Column(Integer, primary_key=True)
+    employeeId   = Column(Integer, primary_key=True)
     user_id       = Column(Integer, ForeignKey("users.user_id"), unique=True) # Unique for 1:1 mapping
 
     department    = Column(String(100))

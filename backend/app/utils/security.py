@@ -55,10 +55,11 @@ def create_token(payload: dict, expires_minutes: int) -> str:
     return f"{header}.{body}.{sig}"
 
 
-def create_access_token(user_id: int, role_name: str) -> str:
+def create_access_token(user_id: int, role_name: str, name: str = "") -> str:
+    #using create token function to create access token with user_id and role_name as payload
     return create_token(
-        {"sub": str(user_id), "role": role_name, "type": "access"},
-        ACCESS_TOKEN_EXPIRE_MINUTES
+        payload={"sub": str(user_id), "role": role_name, "name": name, "type": "access"},
+        expires_minutes=ACCESS_TOKEN_EXPIRE_MINUTES
     )
 
 

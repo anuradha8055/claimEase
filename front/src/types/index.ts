@@ -2,7 +2,7 @@ export type UserRole = 'EMPLOYEE' | 'SCRUTINY_OFFICER' | 'MEDICAL_OFFICER' | 'FI
 
 export interface User {
   user_id: number;
-  username: string;
+  name: string;
   email: string;
   role: UserRole;
   account_status: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED';
@@ -10,7 +10,7 @@ export interface User {
 }
 
 export interface Employee {
-  employee_id: number;
+  employeeId: number;
   user_id: number;
   employee_code: string;
   full_name: string;
@@ -52,7 +52,7 @@ export type ClaimStatus =
 
 export interface Claim {
   claim_id: number;
-  employee_id: number;
+  employeeId: number;
   hospital_id: number;
   claim_number: string;
   admission_date: string;

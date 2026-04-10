@@ -19,7 +19,7 @@ def create_claim(db: Session, payload: ClaimCreate, user_id: int) -> Claim:
         raise HTTPException(status_code=404, detail="Employee profile not found for this user")
 
     claim = Claim(
-        employee_id       = employee.employee_id,
+        employeeId       = employee.employeeId,
         hospital_id       = payload.hospital_id,
         admission_date    = payload.admission_date,
         discharge_date    = payload.discharge_date,
@@ -46,7 +46,7 @@ def submit_claim(db: Session, claim_id: int, user_id: int) -> Claim:
 
     # Verify ownership
     employee = db.query(Employee).filter(Employee.user_id == user_id).first()
-    if not employee or claim.employee_id != employee.employee_id:
+    if not employee or claim.employeeId != employee.employeeId:
         raise HTTPException(status_code=403, detail="You can only submit your own claims")
 
     actor = db.query(User).filter(User.user_id == user_id).first()
@@ -72,4 +72,4 @@ def get_my_claims(db: Session, user_id: int) -> list[Claim]:
     employee = db.query(Employee).filter(Employee.user_id == user_id).first()
     if not employee:
         return []
-    return db.query(Claim).filter(Claim.employee_id == employee.employee_id).all()
+    return db.query(Claim).filter(Claim.employeeId == employee.employeeId).all()

@@ -18,11 +18,24 @@ class ClaimStatus(str, enum.Enum):
     PAYMENT_PROCESSED  = "PAYMENT_PROCESSED"
     REJECTED           = "REJECTED"
 
+# Define valid state transitions for the claim workflow
+CLAIM_TRANSITIONS = {
+    ClaimStatus.DRAFT: [ClaimStatus.SUBMITTED, ClaimStatus.REJECTED],
+    ClaimStatus.SUBMITTED: [ClaimStatus.SCRUTINY_APPROVED, ClaimStatus.QUERY_RAISED, ClaimStatus.REJECTED],
+    ClaimStatus.SCRUTINY_APPROVED: [ClaimStatus.MEDICAL_APPROVED, ClaimStatus.QUERY_RAISED, ClaimStatus.REJECTED],
+    ClaimStatus.MEDICAL_APPROVED: [ClaimStatus.FINANCE_APPROVED, ClaimStatus.QUERY_RAISED, ClaimStatus.REJECTED],
+    ClaimStatus.FINANCE_APPROVED: [ClaimStatus.DDO_SANCTIONED, ClaimStatus.QUERY_RAISED, ClaimStatus.REJECTED],
+    ClaimStatus.QUERY_RAISED: [ClaimStatus.SUBMITTED, ClaimStatus.SCRUTINY_APPROVED, ClaimStatus.MEDICAL_APPROVED, ClaimStatus.FINANCE_APPROVED, ClaimStatus.REJECTED],
+    ClaimStatus.DDO_SANCTIONED: [ClaimStatus.PAYMENT_PROCESSED, ClaimStatus.REJECTED],
+    ClaimStatus.PAYMENT_PROCESSED: [ClaimStatus.REJECTED],
+    ClaimStatus.REJECTED: [],
+}
+
 class Claim(Base):
     __tablename__ = "claims"
 
     claim_id        = Column(Integer, primary_key=True, autoincrement=True)
-    employee_id     = Column(Integer, ForeignKey("employees.employee_id"), nullable=False)
+    employeeId     = Column(Integer, ForeignKey("employees.employeeId"), nullable=False)
     hospital_id     = Column(Integer, ForeignKey("hospitals.hospital_id"), nullable=False)
     claim_number    = Column(String(50), unique=True, nullable=True) 
 

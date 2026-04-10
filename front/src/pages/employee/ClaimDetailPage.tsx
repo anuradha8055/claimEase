@@ -37,7 +37,7 @@ export const ClaimDetailPage: React.FC = () => {
     // Mock data
     const mockClaim: Claim = {
       claim_id: Number(id),
-      employee_id: 1,
+      employeeId: 1,
       hospital_id: 501,
       claim_number: 'CLM-2026-001',
       admission_date: '2026-03-01',

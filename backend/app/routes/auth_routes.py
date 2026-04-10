@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta, timezone
+from hashlib import new
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.orm import Session
-
 from app.config.database import get_db
 from app.config.settings import REFRESH_TOKEN_EXPIRE_DAYS
 from app.models.user_model import User
@@ -10,6 +10,7 @@ from app.utils.security import (
     hash_password, verify_password,
     create_access_token, create_refresh_token, decode_token
 )
+from app.models.roles_model import Role
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
@@ -17,19 +18,34 @@ router = APIRouter(prefix="/auth", tags=["Auth"])
 @router.post("/register", response_model=UserResponse, status_code=201)
 def register(payload: UserRegister, db: Session = Depends(get_db)):
     """Register a new user. Role must already exist in the roles table."""
+    #checking already registered or not 
     if db.query(User).filter(User.email == payload.email).first():
         raise HTTPException(status_code=400, detail="Email already registered")
 
-    user = User(
+    role_record = db.query(Role).filter(Role.role_name == payload.role).first()
+    
+    if not role_record:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Role '{payload.role}' does not exist in the database."
+        )
+    #hash the password
+    hashed_password = hash_password(payload.password)
+
+    new_user = User(
+        name           = payload.name,
+        department     = payload.department,
+        profession     = payload.profession,
+        employeeId    = payload.employeeId,
+        contact        = payload.contact,
         email          = payload.email,
-        password_hash  = hash_password(payload.password),
-        role_id        = payload.role_id,
-        phone          = payload.phone,
+        role_id        = role_record.role_id,
+        password_hash  = hashed_password,
     )
-    db.add(user)
+    db.add(new_user)
     db.commit()
-    db.refresh(user)
-    return user
+    db.refresh(new_user)
+    return new_user
 
 
 @router.post("/login", response_model=TokenResponse)
@@ -43,7 +59,7 @@ def login(payload: UserLogin, db: Session = Depends(get_db)):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Account is not active")
 
     role_name = user.role.role_name if user.role else ""
-    access    = create_access_token(user.user_id, role_name)
+    access    = create_access_token(user.user_id, role_name, user.name)
     refresh   = create_refresh_token(user.user_id)
 
     # Store refresh token in DB for rotation

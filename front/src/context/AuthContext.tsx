@@ -24,8 +24,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (payload) {
       const newUser: User = {
         user_id: Number(payload.sub),
-        username: payload.email?.split('@')[0] || 'user',
         email: payload.email || '',
+        name: payload.name || '',
         role: payload.role as UserRole,
         account_status: 'ACTIVE',
         last_login: new Date().toISOString(),

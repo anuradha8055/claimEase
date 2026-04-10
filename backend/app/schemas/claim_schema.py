@@ -36,8 +36,28 @@ class ClaimRead(ClaimBase):
     claim_number: Optional[str] = None
     eligible_amount: Optional[Decimal] = None
     claim_status: ClaimStatus
-    employee_id: int
+    employeeId: int
     created_at: datetime
     updated_at: datetime
     
     model_config = ConfigDict(from_attributes=True) # Allows Pydantic to read SQLAlchemy objects
+
+class ClaimResponse(ClaimBase):
+    """Response model for claim details"""
+    claim_id: int
+    claim_number: Optional[str] = None
+    eligible_amount: Optional[Decimal] = None
+    claim_status: ClaimStatus
+    employeeId: int
+    created_at: datetime
+    updated_at: datetime
+    
+    model_config = ConfigDict(from_attributes=True)
+
+class ClaimStatusResponse(BaseModel):
+    """Response model for claim status tracking"""
+    claim_id: int
+    claim_status: ClaimStatus
+    updated_at: datetime
+    
+    model_config = ConfigDict(from_attributes=True)

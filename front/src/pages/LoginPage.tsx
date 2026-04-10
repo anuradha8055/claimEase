@@ -6,6 +6,9 @@ import { GlassCard } from '../components/ui/GlassCard';
 import { GradientButton } from '../components/ui/GradientButton';
 import { CheckCircle, ChevronDown, ChevronUp } from 'lucide-react';
 import toast from 'react-hot-toast';
+import {jwtDecode} from 'jwt-decode';
+import * as mrs from '../api/mrs';
+
 
 export const LoginPage: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -20,34 +23,38 @@ export const LoginPage: React.FC = () => {
     setLoading(true);
     
     try {
-      // Mock login for demo purposes as per instructions
-      // In a real app, this would call POST /auth/login
-      const mockToken = btoa(JSON.stringify({
-        sub: 1,
-        email: email,
-        role: email.split('@')[0].toUpperCase().replace('OFFICER', '_OFFICER'),
-        type: 'access'
-      }));
-      
-      // Special case for scrutiny officer role mapping
-      let role = email.split('@')[0].toUpperCase();
-      if (role === 'SCRUTINY') role = 'SCRUTINY_OFFICER';
-      if (role === 'MEDICAL') role = 'MEDICAL_OFFICER';
-      if (role === 'FINANCE') role = 'FINANCE_OFFICER';
+      //calling real backend api
+      const token = await mrs.login(email, password);
 
-      const token = `header.${btoa(JSON.stringify({ sub: 1, email, role, type: 'access' }))}.signature`;
-      
+      //decode the token to get the role
+      const decoded: any=jwtDecode(token);
+      const role = decoded.role;
+
+      //save token in local storage and context
       login(token);
       toast.success('Welcome back!');
       
-      if (role === 'EMPLOYEE') navigate('/employee/dashboard');
-      else if (role === 'SCRUTINY_OFFICER') navigate('/scrutiny/queue');
-      else if (role === 'MEDICAL_OFFICER') navigate('/medical/queue');
-      else if (role === 'FINANCE_OFFICER') navigate('/finance/queue');
-      else if (role === 'DDO') navigate('/ddo/queue');
-      else navigate('/employee/dashboard');
-
+      switch (role) {
+        case 'EMPLOYEE':
+          navigate('/employee/dashboard');
+          break;
+        case 'SCRUTINY_OFFICER':
+          navigate('/scrutiny/queue');
+          break;
+        case 'MEDICAL_OFFICER':
+          navigate('/medical/queue');
+          break;
+        case 'FINANCE_OFFICER':
+          navigate('/finance/queue');
+          break;
+        case 'DDO':
+          navigate('/ddo/queue');
+          break;
+        default:
+          navigate('/employee/dashboard');
+      }
     } catch (error) {
+      //error handled by axios interceptor
       toast.error('Invalid credentials');
     } finally {
       setLoading(false);

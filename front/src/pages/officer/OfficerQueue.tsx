@@ -47,7 +47,7 @@ export const OfficerQueue: React.FC = () => {
     const mockClaims: Claim[] = [
       {
         claim_id: 201,
-        employee_id: 10,
+        employeeId: 10,
         hospital_id: 601,
         claim_number: 'CLM-2026-045',
         // patient_name: 'Rahul Sharma',   // ✅ ADD THIS
@@ -63,7 +63,7 @@ export const OfficerQueue: React.FC = () => {
       },
       {
         claim_id: 202,
-        employee_id: 11,
+        employeeId: 11,
         hospital_id: 602,
         claim_number: 'CLM-2026-048',
         // patient_name: 'Sneha Patil',   // ✅ ADD THIS
@@ -219,8 +219,8 @@ export const OfficerQueue: React.FC = () => {
                     </td>
 
                     <td className="px-6 py-4">
-                      <p className="text-sm text-text-primary">EMP-{claim.employee_id}</p>
-                      <p className="text-[10px] text-text-muted">ID: {claim.employee_id}</p>
+                      <p className="text-sm text-text-primary">EMP-{claim.employeeId}</p>
+                      <p className="text-[10px] text-text-muted">ID: {claim.employeeId}</p>
                     </td>
                     <td className="px-6 py-4">
                       <p className="text-sm text-text-primary">Hosp-{claim.hospital_id}</p>

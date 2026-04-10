@@ -913,7 +913,7 @@ async function reviewClaim(claimId){
   content.innerHTML = `
     <div style="display:flex;align-items:center;gap:16px;margin-bottom:28px">
       <button onclick="showPage('officerQueue');loadOfficerQueue()" style="width:40px;height:40px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:10px;color:#e2e8f0;cursor:pointer;display:flex;align-items:center;justify-content:center"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></button>
-      <div><h1 style="font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:700">Review: ${claim.claim_number||'Claim #'+claim.claim_id}</h1><p style="font-size:13px;color:rgba(226,232,240,0.5);margin-top:2px">Employee Claim ID ${claim.employee_id}</p></div>
+      <div><h1 style="font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:700">Review: ${claim.claim_number||'Claim #'+claim.claim_id}</h1><p style="font-size:13px;color:rgba(226,232,240,0.5);margin-top:2px">Employee Claim ID ${claim.employeeId}</p></div>
       <div style="margin-left:auto">${getStatusBadge(claim.claim_status)}</div>
     </div>
 

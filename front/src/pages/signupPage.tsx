@@ -1,36 +1,113 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { GlassCard } from '../components/ui/GlassCard';
 import { GradientButton } from '../components/ui/GradientButton';
 import { motion } from 'framer-motion';
 import { CheckCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { set } from 'date-fns';
+import * as mrs from '../api/mrs';
 
-export const SignupPage: React.FC = () => {
+
+type SignupRole = 
+| 'EMPLOYEE' 
+| 'SCRUTINY_OFFICER' 
+| 'MEDICAL_OFFICER' 
+| 'FINANCE_OFFICER' 
+| 'DDO';
+
+
+const Role_Options: { label: string; value: SignupRole }[] = [
+  { label: 'Employee', value: 'EMPLOYEE' },
+  { label: 'Scrutiny Officer', value: 'SCRUTINY_OFFICER' },
+  { label: 'Medical Officer', value: 'MEDICAL_OFFICER' },
+  { label: 'Finance Officer', value: 'FINANCE_OFFICER' },
+  { label: 'DDO', value: 'DDO' },
+];
+
+
+const Department_Names = [
+  "Administration",
+  "Finance and Taxation",
+  "Agriculture and Allied Services",
+  "Education",
+  "Health",
+  "Information Technology",
+  "Disaster Management",
+  "Police and Law Enforcement",
+  "Cleanliness and Sanitation",
+  "women and child development",
+  "Research and Development",
+  "Urban Development",
+  "Rural Development",
+  "Public Works ",
+  "Transport and communication",
+  "Social Welfare",
+  "Energy and Environment",
+  "Tourism and Culture",
+  "Sports and Youth Affairs",
+  "Legal and Judicial",
+  "Defense and Security",
+  "Labor and Employment",
+] as const;
+
+
+export function SignupPage() {
   const navigate = useNavigate();
+  const [busy, setBusy] = useState(false);
 
-  const [form, setForm] = useState({
+  const [formData, setFormData] = useState({
     name: '',
     department: '',
     profession: '',
     employeeId: '',
     contact: '',
     email: '',
-    role: '',
+    role: 'EMPLOYEE' as SignupRole,
     password: '',
   });
 
-  const handleChange = (e: any) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    setFormData((prev) => ({ 
+      ...prev, [e.target.name]: e.target.value }));
   };
 
-  const handleSignup = (e: any) => {
+
+  async function handleSignup(e: React.FormEvent) {
     e.preventDefault();
+    setBusy(true);
 
-    console.log('Signup Data:', form);
+    if (!formData) {
+      toast.error("Please fill all required fields");
+      setBusy(false);
+      return;
+    }
 
-    toast.success('Account created successfully!');
-    navigate('/login');
+    const body: Parameters<typeof mrs.register>[0] = {
+      name: formData.name.trim(),
+      department: formData.department.trim(),
+      profession: formData.profession.trim(),
+      employeeId: formData.employeeId,
+      contact: formData.contact,
+      email: formData.email.trim().toLowerCase(),
+      role: formData.role,
+      password: formData.password,
+    };
+
+    try {
+      await mrs.register(body);
+      toast.success("Account created successfully! Please login.");
+      navigate('/login');
+    } catch (error) {
+      toast.error("Failed to create account. Please try again.");
+      return;
+    }   
+    finally {
+      setBusy(false);
+    }
+   
   };
 
   return (
@@ -66,12 +143,18 @@ export const SignupPage: React.FC = () => {
             />
 
             {/* Department */}
-            <input
+            <select
               name="department"
-              placeholder="Department"
               onChange={handleChange}
-              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white"
-            />
+              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-black"
+            >
+              <option value="">Select Department</option>
+              {Department_Names.map((dept) => (
+                <option key={dept} value={dept}>
+                  {dept}
+                </option>
+              ))}
+            </select>
 
             {/* Profession */}
             <input

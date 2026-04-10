@@ -121,11 +121,11 @@ export const Sidebar: React.FC = () => {
           className="flex items-center gap-3 mb-4 w-full text-left group"
         >
           <div className="w-10 h-10 rounded-full bg-linear-to-br from-accent-purple to-accent-violet flex items-center justify-center text-white font-bold group-hover:scale-110 transition-transform">
-            {user?.email[0].toUpperCase()}
+            {(user?.name?.[0] || user?.email?.[0] || 'U').toUpperCase()}
           </div>
           <div className="overflow-hidden">
-            <p className="text-sm font-medium text-text-primary truncate group-hover:text-accent-purple transition-colors">{user?.email}</p>
-            <p className="text-[10px] text-text-muted font-bold uppercase tracking-wider">{user?.role.replace('_', ' ')}</p>
+            <p className="text-sm font-medium text-text-primary truncate group-hover:text-accent-purple transition-colors">{user?.name || user?.email || 'User'}</p>
+            <p className="text-[10px] text-text-muted font-bold uppercase tracking-wider">{user?.role.replace('_', ' ')|| "Role"}</p>
           </div>
         </button>
         <button 

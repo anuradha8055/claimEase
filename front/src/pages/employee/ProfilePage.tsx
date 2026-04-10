@@ -21,7 +21,7 @@ export const ProfilePage: React.FC = () => {
 
   // Mock employee data based on ER diagram
   const employeeData = {
-    employee_id: 1,
+    employeeId: 1,
     name: 'Rajesh Kumar',
     email: user?.email || 'rajesh.kumar@maharashtra.gov.in',
     phone: '+91 98765 43210',
@@ -103,7 +103,7 @@ export const ProfilePage: React.FC = () => {
                 </div>
                 <div className="space-y-1">
                   <p className="text-[10px] font-bold text-text-muted uppercase tracking-widest">Employee ID</p>
-                  <p className="text-sm text-text-primary font-medium">EMP-{employeeData.employee_id.toString().padStart(4, '0')}</p>
+                  <p className="text-sm text-text-primary font-medium">EMP-{employeeData.employeeId.toString().padStart(4, '0')}</p>
                 </div>
                 <div className="space-y-1">
                   <p className="text-[10px] font-bold text-text-muted uppercase tracking-widest">Date of Joining</p>

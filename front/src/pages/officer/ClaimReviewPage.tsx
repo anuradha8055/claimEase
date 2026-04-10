@@ -65,7 +65,7 @@ export const ClaimReviewPage: React.FC = () => {
       // Mock claim
       const mockClaim: Claim = {
         claim_id: Number(id),
-        employee_id: 10,
+        employeeId: 10,
         hospital_id: 601,
         claim_number: 'CLM-2026-045',
         admission_date: '2026-03-01',
@@ -202,7 +202,7 @@ export const ClaimReviewPage: React.FC = () => {
                 </div>
                 <div className="text-right">
                   <p className="text-[10px] font-bold text-text-muted uppercase tracking-widest">Employee ID</p>
-                  <p className="text-sm text-text-primary font-bold">EMP-{claim.employee_id.toString().padStart(4, '0')}</p>
+                  <p className="text-sm text-text-primary font-bold">EMP-{claim.employeeId.toString().padStart(4, '0')}</p>
                 </div>
               </div>
 

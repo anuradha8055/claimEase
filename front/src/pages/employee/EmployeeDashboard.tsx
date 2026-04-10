@@ -17,8 +17,11 @@ import {
   AlertTriangle
 } from 'lucide-react';
 import { format, differenceInDays } from 'date-fns';
-import { Link } from 'react-router-dom';
+import { data, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
+import * as mrs from '../../api/mrs';
+
+
 
 export const EmployeeDashboard: React.FC = () => {
   const { user } = useAuth();
@@ -27,58 +30,21 @@ export const EmployeeDashboard: React.FC = () => {
   const [showSlaBanner, setShowSlaBanner] = useState(true);
 
   useEffect(() => {
-    // Mock data for demo
-    const mockClaims: Claim[] = [
-      {
-        claim_id: 101,
-        employee_id: 1,
-        hospital_id: 501,
-        claim_number: 'CLM-2026-001',
-        admission_date: '2026-03-01',
-        discharge_date: '2026-03-05',
-        diagnosis: 'Acute Appendicitis',
-        total_bill_amount: 45000,
-        eligible_reimbursement_amount: null,
-        claim_status: 'SUBMITTED',
-        current_workflow_stage: 'SUBMITTED',
-        submission_timestamp: '2026-03-06T10:00:00Z',
-        last_updated_timestamp: '2026-03-18T10:00:00Z', // 7 days ago
-      },
-      {
-        claim_id: 102,
-        employee_id: 1,
-        hospital_id: 502,
-        claim_number: 'CLM-2026-002',
-        admission_date: '2026-03-10',
-        discharge_date: '2026-03-12',
-        diagnosis: 'Viral Fever',
-        total_bill_amount: 12000,
-        eligible_reimbursement_amount: 10500,
-        claim_status: 'PAYMENT_PROCESSED',
-        current_workflow_stage: 'PAYMENT_PROCESSED',
-        submission_timestamp: '2026-03-13T10:00:00Z',
-        last_updated_timestamp: '2026-03-24T10:00:00Z',
-      },
-      {
-        claim_id: 103,
-        employee_id: 1,
-        hospital_id: 503,
-        claim_number: 'CLM-2026-003',
-        admission_date: '2026-03-15',
-        discharge_date: '2026-03-18',
-        diagnosis: 'Fracture Treatment',
-        total_bill_amount: 35000,
-        eligible_reimbursement_amount: null,
-        claim_status: 'QUERY_RAISED',
-        current_workflow_stage: 'QUERY_RAISED',
-        submission_timestamp: '2026-03-19T10:00:00Z',
-        last_updated_timestamp: '2026-03-22T10:00:00Z',
+    const fetchClaims = async () => {
+      try {
+        setLoading(true);
+        const data = await mrs.getEmployeeClaims();
+        setClaims(data);
+      } catch (error) {
+        console.error('Error fetching claims:', error);
+      } finally {
+        setLoading(false);
       }
-    ];
-    setClaims(mockClaims);
-    setLoading(false);
+    };
+    fetchClaims();
   }, []);
-
+  
+//calculations for dashboard stats
   const stats = [
     { label: 'Total Claims', value: claims.length, icon: FileText, color: 'text-accent-purple' },
     { label: 'In Progress', value: claims.filter(c => c.claim_status !== 'PAYMENT_PROCESSED' && c.claim_status !== 'REJECTED').length, icon: Clock, color: 'text-accent-amber' },
@@ -92,11 +58,23 @@ export const EmployeeDashboard: React.FC = () => {
     differenceInDays(new Date(), new Date(c.last_updated_timestamp)) >= 5
   ).length;
 
+  //loading state UI
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <motion.div 
+          className="w-16 h-16 border-4 border-accent-purple border-t-transparent rounded-full animate-spin"
+        />
+      </div>
+    );
+  }
+
+
   return (
     <PageTransition>
       <div className="space-y-8">
         <header className="flex flex-col gap-1">
-          <h1 className="text-3xl font-bold text-white">Welcome back, {user?.email.split('@')[0]}</h1>
+          <h1 className="text-3xl font-bold text-white">Welcome back, {user?.email}</h1>
           <p className="text-text-secondary flex items-center gap-2">
             <Calendar size={16} />
             {format(new Date(), 'EEEE, MMMM do yyyy')}
