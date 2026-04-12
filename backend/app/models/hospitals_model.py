@@ -11,9 +11,7 @@ class Hospital(Base):
     hospital_type         = Column(String(50),  nullable=False)  # 'GOVT', 'PRIVATE', 'TRUST'
     city                  = Column(String(100), nullable=False)
     state                 = Column(String(100), nullable=False)
-    registration_number   = Column(String(100), unique=True)
-    contact_number        = Column(String(20))
-
+    hospital_contact_number = Column(String(20))
     # Empanelment fields — added for medical officer auto-flag
     is_empanelled         = Column(Boolean, nullable=False, default=False)
     empanelment_tier      = Column(String(10))   # 'A', 'B', 'C' or None

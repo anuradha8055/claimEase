@@ -45,6 +45,17 @@ def register(payload: UserRegister, db: Session = Depends(get_db)):
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
+    
+    if payload.role.upper() == "EMPLOYEE":
+        from app.models.employees_model import Employee
+        new_employee = Employee(
+            user_id = new_user.user_id,
+            department = payload.department,
+            designation = payload.profession
+        )
+        db.add(new_employee)
+        db.commit()
+
     return new_user
 
 

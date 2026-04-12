@@ -76,7 +76,7 @@ class WorkflowService:
         new_notification = Notification(
             user_id=claim.employee.user_id,
             title=f"Claim Update: {to_status}",
-            message=f"Your claim {claim.claim_number} has been moved from {old_status} to {to_status}. Remarks: {remarks}",
+            message=f"Your claim #{claim.claim_id} has been moved from {old_status} to {to_status}. Remarks: {remarks}",
             claim_id=claim.claim_id
         )
         db.add(new_notification)

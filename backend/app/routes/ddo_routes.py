@@ -78,5 +78,5 @@ def sanctioned_claims(
         .filter(Claim.claim_status == ClaimStatus.PAYMENT_PROCESSED)
         .all()
     )
-    return [{"claim_id": c.claim_id, "claim_number": c.claim_number,
+    return [{"claim_id": c.claim_id,
              "eligible_amount": float(c.eligible_amount or 0)} for c in claims]

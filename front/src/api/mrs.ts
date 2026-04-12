@@ -18,17 +18,18 @@ import type {
     ClaimResponse,
     CalculationResponse,
     DocumentResponse,
-    QueryResponse} from '../types/index';
+    QueryResponse
+} from '../types/index';
 
 
-export const getEmployeeClaims =async() => {
-    const {data} = await api.get<Claim[]>('/employee/claims');
+export const getEmployeeClaims = async () => {
+    const { data } = await api.get<ClaimResponse[]>('/claims/my-claims');
     return data;
 };
 
 
 export async function login(email: string, password: string) {
-    const {data} = await api.post<{access_token: string}>('/auth/login', { email, password });
+    const { data } = await api.post<{ access_token: string }>('/auth/login', { email, password });
     return data.access_token;
 }
 
@@ -46,26 +47,31 @@ export async function register(body: {
     return data;
 }
 
+export const createClaim = async (claimData: any) => {
+    // Note: The prefix in main.py is /claims, so this hits localhost:8000/claims
+    const { data } = await api.post<ClaimResponse>('/claims/create_claim', claimData);
+    return data;
+};
+
+export const submitClaimWorkflow = async (claim_id: number): Promise<ClaimResponse> => {
+    const { data } = await api.post<ClaimResponse>(`/claims/${claim_id}/submit`);
+    return data;
+};
+
+
+
 export const checkHospitalEligibility = async (hospitalId: string): Promise<HospitalCheckResponse> => {
     try {
-        const response = await api.get(`/hospitals/${hospitalId}/eligibility`); 
+        const response = await api.get(`/hospitals/${hospitalId}/eligibility`);
         return response.data;
     } catch (error) {
         console.error('Error checking hospital eligibility:', error);
         throw error;
     }
-};  
-
-export const submitClaim = async (claimData: Partial<Claim>): Promise<ClaimResponse> => {
-    try {
-        const response = await api.post('/claims', claimData);  
-        toast.success('Claim submitted successfully!');
-        return response.data;
-    } catch (error) {
-        console.error('Error submitting claim:', error);
-        throw error;
-    }
 };
+
+// in mrs.ts
+
 
 export const uploadDocument = async (claimId: number, documentData: FormData): Promise<DocumentResponse> => {
     try {
@@ -89,7 +95,8 @@ export const raiseQuery = async (claimId: number, queryData: Partial<Query>): Pr
         toast.success('Query raised successfully!');
         return response.data;
     }
-    catch (error) {        console.error('Error raising query:', error);
+    catch (error) {
+        console.error('Error raising query:', error);
         throw error;
     }
 };

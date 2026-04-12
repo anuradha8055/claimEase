@@ -6,7 +6,6 @@ from app.models import *  # registers all models with Base
 
 # Import all routers
 from app.routes.auth_routes     import router as auth_router
-from app.routes.employee_routes    import router as claim_router
 from app.routes.document_routes import router as document_router
 from app.routes.scrutiny_routes import router as scrutiny_router
 from app.routes.medical_routes  import router as medical_router
@@ -15,6 +14,7 @@ from app.routes.ddo_routes      import router as ddo_router
 from app.routes.query_routes    import router as query_router
 from app.models import *
 from app.routes import auth_routes
+from app.routes import employee_routes
 # Create all tables (safe — skips existing tables)
 Base.metadata.create_all(bind=engine)
 
@@ -37,13 +37,13 @@ app.add_middleware(
 
 # Register all routers
 app.include_router(auth_routes.router)
-app.include_router(claim_router)
-app.include_router(document_router)
-app.include_router(scrutiny_router)
-app.include_router(medical_router)
-app.include_router(finance_router)
-app.include_router(ddo_router)
-app.include_router(query_router)
+app.include_router(employee_routes.router)
+app.include_router(document_router, prefix="/documents")
+app.include_router(scrutiny_router, prefix="/scrutiny")
+app.include_router(medical_router, prefix="/medical")
+app.include_router(finance_router, prefix="/finance")
+app.include_router(ddo_router, prefix="/ddo")
+app.include_router(query_router, prefix="/queries")
 
 
 @app.get("/", tags=["Health"])

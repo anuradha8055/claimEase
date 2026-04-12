@@ -6,11 +6,12 @@ from app.core.dependencies import get_current_user, get_current_employee
 from app.models.user_model import User
 from app.schemas.claim_schema import ClaimCreate, ClaimResponse, ClaimStatusResponse
 from app.services import claim_service
-from app.models.claim_model import Claim # A
+from app.models.claim_model import Claim 
+
 router = APIRouter(prefix="/claims", tags=["Claims"])
 
 
-@router.post("/", response_model=ClaimResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/create_claim", response_model=ClaimResponse, status_code=status.HTTP_201_CREATED)
 def create_claim(
     payload: ClaimCreate,
     db:           Session = Depends(get_db),
@@ -59,10 +60,8 @@ def claim_status(
     claim = claim_service.get_claim(db, claim_id)
     return ClaimStatusResponse(
         claim_id      = claim.claim_id,
-        claim_number  = claim.claim_number,
         claim_status  = claim.claim_status.value,
         current_stage = claim.current_stage.value,
-        updated_at    = claim.updated_at,
     )
 
 @router.get("/my-claims", response_model=list[ClaimResponse])

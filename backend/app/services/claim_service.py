@@ -1,15 +1,10 @@
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from sqlalchemy.orm import Session
 from fastapi import HTTPException
 from app.models.claim_model import Claim, ClaimStatus
 from app.models.employees_model import Employee
 from app.schemas.claim_schema import ClaimCreate
 
-
-def _generate_claim_number(db: Session, dept_code: str = "MH") -> str:
-    year  = datetime.now(timezone.utc).year
-    count = db.query(Claim).count() + 1
-    return f"{dept_code}-{year}-{count:06d}"
 
 
 def create_claim(db: Session, payload: ClaimCreate, user_id: int) -> Claim:
@@ -18,21 +13,35 @@ def create_claim(db: Session, payload: ClaimCreate, user_id: int) -> Claim:
     if not employee:
         raise HTTPException(status_code=404, detail="Employee profile not found for this user")
 
-    claim = Claim(
+    #calculate age
+    today = date.today()
+    calculated_age = today.year - payload.patient_dob.year - (
+        (today.month, today.day) < (payload.patient_dob.month, payload.patient_dob.day)
+    )
+
+    claims = Claim(
         employeeId       = employee.employeeId,
         hospital_id       = payload.hospital_id,
         admission_date    = payload.admission_date,
         discharge_date    = payload.discharge_date,
         diagnosis         = payload.diagnosis,
         total_bill_amount = payload.total_bill_amount,
-        claimed_amount    = payload.claimed_amount,
+        treatment_details = payload.treatment_details,
+        is_emergency      = payload.is_emergency,
+        patient_name      = payload.patient_name,
+        relation          = payload.relation,
+        patient_gender    = payload.patient_gender,
+        patient_dob       = payload.patient_dob,    
+        patient_age       = calculated_age,
+        doctor_name       = payload.doctor_name,
+        doctor_qualification = payload.doctor_qualification,
         claim_status      = ClaimStatus.DRAFT,
         current_stage     = ClaimStatus.DRAFT,
     )
-    db.add(claim)
+    db.add(claims)
     db.commit()
-    db.refresh(claim)
-    return claim
+    db.refresh(claims)
+    return claims
 
 
 def submit_claim(db: Session, claim_id: int, user_id: int) -> Claim:
@@ -52,11 +61,6 @@ def submit_claim(db: Session, claim_id: int, user_id: int) -> Claim:
     actor = db.query(User).filter(User.user_id == user_id).first()
     claim = transition(db, claim_id, ClaimStatus.SUBMITTED, actor, "Employee submitted claim")
 
-    # Assign inward number on first submit
-    if not claim.claim_number:
-        claim.claim_number = _generate_claim_number(db)
-        db.commit()
-        db.refresh(claim)
 
     return claim
 

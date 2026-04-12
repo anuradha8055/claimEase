@@ -1,5 +1,5 @@
 import enum
-from datetime import datetime
+from datetime import date, datetime
 from sqlalchemy import (
     Column, Integer, String, Numeric, Date, Text,
     DateTime, ForeignKey, Enum as SAEnum, func, Boolean
@@ -35,10 +35,21 @@ class Claim(Base):
     __tablename__ = "claims"
 
     claim_id        = Column(Integer, primary_key=True, autoincrement=True)
-    employeeId     = Column(Integer, ForeignKey("employees.employeeId"), nullable=False)
+    employeeId      = Column(Integer, ForeignKey("employees.employeeId"), nullable=False)
+    patient_name    = Column(String(255), nullable=False) # Added patient name for better claim details
+    relation        = Column(String(100), nullable=False) # Relation of patient to employee (self, spouse, child, parent)
+    patient_gender  = Column(String(10), nullable=False) # Added patient
+    patient_dob     = Column(Date, nullable=False) # Added patient date of birth for age-based eligibility rules    
+    
+    patient_age = Column(Integer) # Added patient age for easier querying and eligibility checks
+    #Hospital info
     hospital_id     = Column(Integer, ForeignKey("hospitals.hospital_id"), nullable=False)
-    claim_number    = Column(String(50), unique=True, nullable=True) 
 
+    
+    #treatment and doctor info
+    treatment_details = Column(Text) # Added treatment details for better claim processing and audit trail
+    doctor_name      = Column(String(255)) # Added doctor name for better claim details and audit trail
+    doctor_qualification = Column(String(255)) # Added doctor qualification for better claim details and audit trail
     admission_date  = Column(Date, nullable=False)
     discharge_date  = Column(Date, nullable=False)
     diagnosis       = Column(Text)
@@ -46,17 +57,16 @@ class Claim(Base):
 
     # Financials: Using Numeric(12, 2) consistently
     total_bill_amount = Column(Numeric(12, 2), nullable=False) 
-    claimed_amount    = Column(Numeric(12, 2), nullable=False) 
     eligible_amount   = Column(Numeric(12, 2)) # Populated by Medical/Rules engine
 
-    claim_status    = Column(SAEnum(ClaimStatus, name="claim_status_enum"), nullable=False, default=ClaimStatus.DRAFT)
+    # --- Status ---
+    claim_status = Column(SAEnum(ClaimStatus, name="claim_status_enum"), default=ClaimStatus.DRAFT)
+    current_stage = Column(SAEnum(ClaimStatus, name="claim_status_enum"), default=ClaimStatus.DRAFT)
     
-    # Tracks which role currently owns the claim
-    assigned_to_role_id = Column(Integer, ForeignKey("roles.role_id"), nullable=True)
-
-    created_at      = Column(DateTime, nullable=False, server_default=func.now())
-    updated_at      = Column(DateTime, nullable=False, server_default=func.now(), onupdate=func.now())
-
+    # Audit fields
+    created_at = Column(DateTime, nullable=False, server_default=func.now())
+    updated_at = Column(DateTime, nullable=False, server_default=func.now(), onupdate=func.now())
+    
     # Relationships
     employee        = relationship("Employee", back_populates="claims")
     hospital        = relationship("Hospital", back_populates="claims")
@@ -65,3 +75,23 @@ class Claim(Base):
     queries         = relationship("Query", back_populates="claim")
     payments        = relationship("Payment", back_populates="claim")
     treatments      = relationship("Treatment", back_populates="claim")
+
+    @property
+    def hospital_name(self) -> str:
+        return self.hospital.hospital_name if self.hospital else ""
+
+    @property
+    def hospital_type(self) -> str:
+        return self.hospital.hospital_type if self.hospital else ""
+
+    @property
+    def hospital_city(self) -> str:
+        return self.hospital.city if self.hospital else ""
+
+    @property
+    def hospital_state(self) -> str:
+        return self.hospital.state if self.hospital else ""
+
+    @property
+    def hospital_contact_number(self) -> str:
+        return self.hospital.hospital_contact_number if self.hospital else ""
