@@ -11,24 +11,24 @@ class HospitalDetails(Base):
     claim_id = Column(UUID(as_uuid=True), ForeignKey("claims.claim_id"), nullable=False)
     
     # Hospital Identity
-    hospitalName = Column(String(255), nullable=False)
-    hospitalType = Column(String(100)) # e.g., 'GOVT', 'PRIVATE'
+    hospitalName = Column("hospitalname", String(255), nullable=False)
+    hospitalType = Column("hospitaltype", String(100)) # e.g., 'GOVT', 'PRIVATE'
     
     # Location
-    hospitalAddress = Column(Text)
-    hospitalCity = Column(String(100))
-    hospitalState = Column(String(100))
-    hospitalPincode = Column(String(10))
-    hospitalContactNo = Column(String(20))
+    hospitalAddress = Column("hospitaladdress", Text)
+    hospitalCity = Column("hospitalcity", String(100))
+    hospitalState = Column("hospitalstate", String(100))
+    hospitalPincode = Column("hospitalpincode", String(10))
+    hospitalContactNo = Column("hospitalcontactno", String(20))
     
     # Professional Details
-    doctorName = Column(String(255))
-    doctorQualification = Column(String(255))
-    treatmentDetails = Column(Text)
+    doctorName = Column("doctorname", String(255))
+    doctorQualification = Column("doctorqualification", String(255))
+    treatmentDetails = Column("treatmentdetails", Text)
     
     # Timeline
-    admissionDate = Column(Date, nullable=False)
-    dischargeDate = Column(Date, nullable=False)
+    admissionDate = Column("admissiondate", Date, nullable=False)
+    dischargeDate = Column("dischargedate", Date, nullable=False)
 
     # Relationships
     claim = relationship("Claim", back_populates="hospital")

@@ -3,6 +3,8 @@ from datetime import date, datetime
 from typing import Optional, List, Literal
 from decimal import Decimal
 from app.models.claim_model import ClaimStatus
+from uuid import UUID
+
 
 RelationType= Literal["Father", "Mother", "Husband", "Wife","Son", "Daughter","Brother", "Sister","Self"] # For future use in notifications, etc.
 
@@ -14,16 +16,29 @@ class ClaimBase(BaseModel):
 
 # --- For the EMPLOYEE: Creating a claim ---
 class ClaimCreate(ClaimBase):
-        # Flattened payload for easy React integration
+    # Flattened payload for easy React integration
+    # Patient details
     patientName: str
     relation: str
     patientGender: str
     patientBirthDate: date
+    diagnosis: str
+    
+    # Hospital details
     hospitalName: str
     hospitalType: str
+    hospitalAddress: str = ""
+    hospitalCity: str = ""
+    hospitalState: str = ""
+    hospitalPincode: str = ""
+    hospitalContactNumber: str = ""
+    
+    # Treatment details
     admissionDate: date
     dischargeDate: date
-    diagnosis: str
+    treatmentDetails: str = ""
+    doctorName: str = ""
+    doctorQualification: str = ""
 
 # --- For the MEDICAL OFFICER: Approving/Calculating amount ---
 class ClaimMedicalUpdate(BaseModel):

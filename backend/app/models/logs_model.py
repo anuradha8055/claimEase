@@ -1,6 +1,8 @@
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, func
+from sqlalchemy import Column, Integer, Text,String, DateTime, ForeignKey, func
 from app.config.database import Base
-
+from uuid import UUID  
+import uuid
+from sqlalchemy.dialects.postgresql import UUID 
 
 class AuditLog(Base):
     __tablename__ = "audit_logs"

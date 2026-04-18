@@ -6,16 +6,17 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import relationship
 from app.config.database import Base
-
-
+import uuid
+from uuid import UUID
+from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 
 class PatientDetails(Base):
     __tablename__ = "patient_details"
-    patient_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    claim_id = Column(UUID(as_uuid=True), ForeignKey("claims.claim_id"), nullable=False)
-    patientName = Column(String(255), nullable=False)
+    patient_id = Column(PG_UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    claim_id = Column(PG_UUID(as_uuid=True), ForeignKey("claims.claim_id"), nullable=False)
+    patientName = Column("patient_name", String(255), nullable=False)
     relation = Column(String(100))
-    birthDate = Column(Date)
+    birthDate = Column("birth_date", Date)
     age = Column(Integer)
     gender = Column(String(20))
     diagnosis = Column(Text)

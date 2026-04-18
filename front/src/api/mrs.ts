@@ -29,8 +29,11 @@ export const getEmployeeClaims = async () => {
 
 
 export async function login(email: string, password: string) {
-    const { data } = await api.post<{ access_token: string }>('/auth/login', { email, password });
-    return data.access_token;
+    const { data } = await api.post<{ accessToken: string }>('/auth/login', { 
+        emailAddress: email, 
+        password 
+    });
+    return data.accessToken;
 }
 
 export async function getCurrentUser() {
@@ -39,12 +42,12 @@ export async function getCurrentUser() {
 }
 
 export async function register(body: {
-    name: string;
+    fullName: string;
     department: string;
     profession: string;
     employeeId: string;
     contact: string;
-    email: string;
+    emailAddress: string;
     role: UserRole;
     password: string;
 }) {
@@ -58,7 +61,7 @@ export const createClaim = async (claimData: any) => {
     return data;
 };
 
-export const submitClaimWorkflow = async (claim_id: number): Promise<ClaimResponse> => {
+export const submitClaimWorkflow = async (claim_id: string): Promise<ClaimResponse> => {
     const { data } = await api.post<ClaimResponse>(`/claims/${claim_id}/submit`);
     return data;
 };

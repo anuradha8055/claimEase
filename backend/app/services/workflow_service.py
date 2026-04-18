@@ -2,10 +2,10 @@ from sqlalchemy.orm import Session, joinedload
 from fastapi import HTTPException, status
 from datetime import datetime
 from app.models.claim_model import Claim, ClaimStatus, CLAIM_TRANSITIONS
-from app.models.workflow_model import ClaimWorkflowLog
 from app.models.notifications_model import Notification
 import traceback
-import sys
+
+from app.models.logs_model import WorkflowLog
 
 class WorkflowService:
     @staticmethod
@@ -51,11 +51,16 @@ class WorkflowService:
                 raise HTTPException(status_code=403, detail="Role not authorized for this action")
 
             # 4. Record the Audit Log
-            workflow_log = ClaimWorkflowLog(
+            workflow_log = WorkflowLog(
+                log_id=None,
                 claim_id=claim.claim_id,
+                stage_id=claim.current_stage,
                 officer_id=current_user_id,
-                action=to_status.value,  # Action is the new status
-                remarks=remarks
+                action_by=to_status.value,  # Action is the new status
+                remarks=remarks,
+                sla_days=None,  # SLA calculation can be added based on timestamps
+                created_at=datetime.utcnow()
+    
             )
             db.add(workflow_log)
 

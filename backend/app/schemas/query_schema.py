@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Optional
 from pydantic import BaseModel, ConfigDict
-
+from uuid import UUID
 
 class QueryRaise(BaseModel):
     claim_id:     int

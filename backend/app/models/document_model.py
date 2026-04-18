@@ -1,11 +1,13 @@
 from datetime import datetime
 from sqlalchemy import (
-    Column, Integer, String, Boolean, DateTime,
+    Column, BigInteger, String, Boolean, DateTime,
     ForeignKey, func, Text
 )
 from sqlalchemy.orm import relationship
 from app.config.database import Base
-
+from uuid import UUID
+import uuid
+from sqlalchemy.dialects.postgresql import UUID
 
 class Document(Base):
     __tablename__ = "upload_documents"

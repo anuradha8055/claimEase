@@ -8,7 +8,7 @@ from app.config.database import get_db
 from app.core.dependencies import get_current_finance_officer
 from app.models.user_model import User
 from app.models.claim_model import Claim, ClaimStatus
-from app.models.hospitals_model import Hospital, HospitalDetails
+from app.models.hospitals_model import HospitalDetails
 from app.schemas.claim_schema import ClaimResponse
 from app.services.workflow_service import transition
 

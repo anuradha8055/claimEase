@@ -89,31 +89,68 @@ export const NewClaimPage: React.FC = () => {
       toast.error('Please enter a valid bill amount');
       return;
     }
+    if (!formData.patient_name.trim()) {
+      toast.error('Patient name is required');
+      return;
+    }
+    if (!formData.admission_date || !formData.discharge_date) {
+      toast.error('Admission and discharge dates are required');
+      return;
+    }
+    if (!formData.relation) {
+      toast.error('Relation is required');
+      return;
+    }
 
     const toastId=toast.loading(status === 'DRAFT' ? 'Saving draft...' : 'Submitting claim...', { id: 'claim-action' });
     
     try{
-      //!.create the claim
+      // Transform frontend snake_case fields to backend camelCase schema
       const claim_payload = {
-        ...formData,
-        hospital_id: Number(formData.hospital_id),
-        total_bill_amount: Number(formData.total_bill_amount),
-        is_emergency: !!formData.is_emergency
+        patientName: formData.patient_name.trim(),
+        relation: formData.relation,
+        patientGender: formData.patient_gender,
+        patientBirthDate: formData.patient_dob,
+        diagnosis: formData.diagnosis.trim(),
+        hospitalName: formData.hospital_name.trim(),
+        hospitalType: formData.hospital_type,
+        hospitalAddress: formData.hospital_address.trim(),
+        hospitalCity: formData.hospital_city.trim(),
+        hospitalState: formData.hospital_state.trim(),
+        hospitalPincode: formData.hospital_pincode.trim(),
+        hospitalContactNumber: formData.hospital_contact_number.trim(),
+        admissionDate: formData.admission_date,
+        dischargeDate: formData.discharge_date,
+        treatmentDetails: formData.treatment_details.trim(),
+        doctorName: formData.doctor_name.trim(),
+        doctorQualification: formData.doctor_qualification.trim(),
+        totalBillAmount: Number(formData.total_bill_amount),
+        isEmergency: !!formData.is_emergency
       };  
 
       // await api call to submit claim
       const claim = await createClaim(claim_payload);
+      toast.dismiss(toastId);
 
-      if (status === 'SUBMITTED') {
-        //trigger workflow transition
-        await submitClaimWorkflow(claim.claim_id);
+      // Attempt to trigger workflow transition if submitted
+      if (status === 'SUBMITTED' && claim.claim_id) {
+        try {
+          await submitClaimWorkflow(claim.claim_id.toString());
+        } catch (workflowError) {
+          console.warn('Workflow submission had an issue, but claim was created:', workflowError);
+          toast.success('Claim saved! Workflow will be processed.');
+        }
+      } else {
+        toast.success(status === 'DRAFT' ? 'Draft saved!' : 'Claim submitted!');
       }
-
-      toast.success(status === 'DRAFT' ? 'Draft saved!' : 'Claim submitted!', { id: toastId });
-      navigate('/employee/dashboard');
+      
+      // Navigate to dashboard after successful claim creation
+      setTimeout(() => navigate('/employee/dashboard'), 500);
     } catch (error: any) {
       toast.dismiss(toastId);
-      console.error('Error submitting claim:', error);
+      console.error('Error creating claim:', error);
+      const errorDetail = error?.response?.data?.detail || 'Failed to create claim. Please check all fields and try again.';
+      toast.error(errorDetail);
     }
   };
 

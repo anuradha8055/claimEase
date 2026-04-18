@@ -6,6 +6,9 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import relationship
 from app.config.database import Base
+from uuid import UUID
+import uuid
+from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 
 class ClaimStatus(str, enum.Enum):
     DRAFT             = "DRAFT"
@@ -33,19 +36,21 @@ CLAIM_TRANSITIONS = {
 
 class Claim(Base):
     __tablename__ = "claims"
-    claim_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.user_id"))
-    totalBillAmount = Column(Numeric(12, 2), nullable=False)
-    approvedAmount = Column(Numeric(12, 2))
-    isEmergency = Column(Boolean, default=False)
+    claim_id = Column(PG_UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id = Column(PG_UUID(as_uuid=True), ForeignKey("users.user_id"))
+    totalBillAmount = Column("totalbillamount", Numeric(12, 2), nullable=False)
+    approvedAmount = Column("approvedamount", Numeric(12, 2))
+    isEmergency = Column("isemergency", Boolean, default=False)
     current_stage = Column(Integer, default=1)
     assigned_to_role_id = Column(Integer, ForeignKey("roles.role_id"))
     
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
 
+    user = relationship("User", back_populates="claims")
     patient = relationship("PatientDetails", back_populates="claim", uselist=False)
     hospital = relationship("HospitalDetails", back_populates="claim", uselist=False)
     documents = relationship("Document", back_populates="claim")
-
     queries = relationship("Query", back_populates="claim")
+    employee = relationship("Employee", primaryjoin="Claim.user_id == Employee.user_id",
+        foreign_keys=[user_id], back_populates="claims", viewonly=True, overlaps="claims,employee")

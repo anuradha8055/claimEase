@@ -21,7 +21,7 @@ router = APIRouter(prefix="/auth", tags=["Auth"])
 def register(payload: UserRegister, db: Session = Depends(get_db)):
     """Register a new user. Role must already exist in the roles table."""
     #checking already registered or not 
-    if db.query(User).filter(User.emailAddress == payload.email).first():
+    if db.query(User).filter(User.emailAddress == payload.emailAddress).first():
         raise HTTPException(status_code=400, detail="Email already registered")
 
     role_record = db.query(Role).filter(Role.role_name == payload.role).first()
@@ -35,14 +35,14 @@ def register(payload: UserRegister, db: Session = Depends(get_db)):
     hashed_password = hash_password(payload.password)
 
     new_user = User(
-        fullName       = payload.name,
+        fullName       = payload.fullName,
         department     = payload.department,
-        profession     = payload.profession,
+        designation     = payload.profession,
         employeeId    = payload.employeeId,
         contactNo       = payload.contact,
-        emailAddress   = payload.email,
+        emailAddress   = payload.emailAddress,
         role_id        = role_record.role_id,
-        password_hash  = hashed_password,
+        password       = hashed_password,
     )
     db.add(new_user)
     db.commit()
@@ -76,24 +76,24 @@ def register(payload: UserRegister, db: Session = Depends(get_db)):
 @router.post("/login", response_model=TokenResponse)
 def login(payload: UserLogin, db: Session = Depends(get_db)):
     """Login with email + password. Returns access + refresh tokens."""
-    user = db.query(User).filter(User.emailAddress == payload.email).first()
-    if not user or not verify_password(payload.password, user.password_hash):
+    user = db.query(User).filter(User.emailAddress == payload.emailAddress).first()
+    if not user or not verify_password(payload.password, user.password):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or password")
 
-    if user.account_status.value != "ACTIVE":
+    if user.accountStatus.value != "ACTIVE":
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Account is not active")
 
     role_name = user.role.role_name if user.role else ""
-    access    = create_access_token(user.user_id, role_name, user.fullName)
+    access    = create_access_token(user.user_id, role_name, user.fullName, user.emailAddress)
     refresh   = create_refresh_token(user.user_id)
 
     # Store refresh token in DB for rotation
-    user.refresh_token            = refresh
-    user.refresh_token_expires_at = datetime.now(timezone.utc) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
-    user.last_login               = datetime.now(timezone.utc)
+    user.refreshToken           = refresh
+    user.refreshTokenExpiresAt = datetime.now(timezone.utc) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
+    user.lastLogin               = datetime.now(timezone.utc)
     db.commit()
 
-    return TokenResponse(access_token=access, refresh_token=refresh)
+    return TokenResponse(accessToken=access, refreshToken=refresh)
 
 
 @router.post("/refresh", response_model=TokenResponse)
@@ -112,19 +112,19 @@ def refresh_token(request: Request, db: Session = Depends(get_db)):
     if not payload or payload.get("type") != "refresh":
         raise HTTPException(status_code=401, detail="Invalid or expired refresh token")
 
-    user = db.query(User).filter(User.user_id == int(payload["sub"])).first()
-    if not user or user.refresh_token != token:
+    user = db.query(User).filter(User.user_id == payload["sub"]).first()
+    if not user or user.refreshToken != token:
         raise HTTPException(status_code=401, detail="Refresh token revoked or reused")
 
     role_name = user.role.role_name if user.role else ""
-    access    = create_access_token(user.user_id, role_name)
+    access    = create_access_token(user.user_id, role_name, user.fullName, user.emailAddress)
     new_ref   = create_refresh_token(user.user_id)
 
-    user.refresh_token            = new_ref
-    user.refresh_token_expires_at = datetime.now(timezone.utc) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
+    user.refreshToken           = new_ref
+    user.refreshTokenExpiresAt = datetime.now(timezone.utc) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
     db.commit()
 
-    return TokenResponse(access_token=access, refresh_token=new_ref)
+    return TokenResponse(accessToken=access, refreshToken=new_ref)
 
 
 @router.post("/logout")

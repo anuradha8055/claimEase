@@ -9,51 +9,59 @@ from app.schemas.claim_schema import ClaimCreate
 
 def create_claim(db: Session, payload: ClaimCreate, user_id: int) -> Claim:
     """Creates a claim in DRAFT state for the logged-in employee."""
-    employee = db.query(Employee).filter(Employee.user_id == user_id).first()
-    if not employee:
-        raise HTTPException(status_code=404, detail="Employee profile not found for this user")
+    from app.models.user_model import User
+    from app.models.patient_model import PatientDetails
+    from app.models.hospitals_model import HospitalDetails
+    
+    user = db.query(User).filter(User.user_id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
 
-    # Calculate age
-    today = date.today()
-    calculated_age = today.year - payload.patient_dob.year - (
-        (today.month, today.day) < (payload.patient_dob.month, payload.patient_dob.day)
+    # Create claim 
+    claim = Claim(
+        user_id = user_id,
+        totalBillAmount = payload.totalBillAmount,
+        isEmergency = payload.isEmergency,
+        current_stage = 1,
+        created_at = datetime.now(timezone.utc),
+        updated_at = datetime.now(timezone.utc),
     )
-
-    # Create claim with hospital info stored directly (no FK validation)
-    claims = Claim(
-        employeeId       = employee.employeeId,
-        # Hospital info stored directly - no database lookup required
-        hospital_name    = payload.hospital_name,
-        hospital_type    = payload.hospital_type,
-        hospital_address = payload.hospital_address,
-        hospital_city    = payload.hospital_city,
-        hospital_state   = payload.hospital_state,
-        hospital_pincode = payload.hospital_pincode,
-        hospital_contact_number = payload.hospital_contact_number,
-        # Patient info
-        patient_name     = payload.patient_name,
-        relation         = payload.relation,
-        patient_gender   = payload.patient_gender,
-        patient_dob      = payload.patient_dob,    
-        patient_age      = calculated_age,
-        # Treatment info
-        admission_date   = payload.admission_date,
-        discharge_date   = payload.discharge_date,
-        diagnosis        = payload.diagnosis,
-        treatment_details = payload.treatment_details,
-        is_emergency     = payload.is_emergency,
-        doctor_name      = payload.doctor_name,
-        doctor_qualification = payload.doctor_qualification,
-        # Financials
-        total_bill_amount = payload.total_bill_amount,
-        # Status
-        claim_status     = ClaimStatus.DRAFT,
-        current_stage    = ClaimStatus.DRAFT,
+    db.add(claim)
+    db.flush()  # Get claim_id without committing
+    
+    # Create patient details
+    patient = PatientDetails(
+        claim_id = claim.claim_id,
+        patientName = payload.patientName,
+        relation = payload.relation,
+        birthDate = payload.patientBirthDate,
+        age = (datetime.now(timezone.utc).date().year - payload.patientBirthDate.year),
+        gender = payload.patientGender,
+        diagnosis = payload.diagnosis,
     )
-    db.add(claims)
+    db.add(patient)
+    
+    # Create hospital details
+    hospital = HospitalDetails(
+        claim_id = claim.claim_id,
+        hospitalName = payload.hospitalName,
+        hospitalType = payload.hospitalType,
+        hospitalAddress = payload.hospitalAddress or "",
+        hospitalCity = payload.hospitalCity or "",
+        hospitalState = payload.hospitalState or "",
+        hospitalPincode = payload.hospitalPincode or "",
+        hospitalContactNo = payload.hospitalContactNumber or "",
+        doctorName = payload.doctorName or "",
+        doctorQualification = payload.doctorQualification or "",
+        treatmentDetails = payload.treatmentDetails or "",
+        admissionDate = payload.admissionDate,
+        dischargeDate = payload.dischargeDate,
+    )
+    db.add(hospital)
+    
     db.commit()
-    db.refresh(claims)
-    return claims
+    db.refresh(claim)
+    return claim
 
 
 def submit_claim(db: Session, claim_id: int, user_id: int) -> Claim:

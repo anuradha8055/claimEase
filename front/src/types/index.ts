@@ -57,19 +57,25 @@ export type ClaimStatus =
   | 'REJECTED';
 
 export interface Claim {
-  claim_id: number;
-  employeeId: number;
-  hospital_id: number;
-  claim_number: string;
-  admission_date: string;
-  discharge_date: string;
-  diagnosis: string;
-  total_bill_amount: number;
-  eligible_reimbursement_amount: number | null;
-  claim_status: ClaimStatus;
-  current_workflow_stage: string;
-  submission_timestamp: string | null;
-  last_updated_timestamp: string;
+  claim_id: string | number;
+  user_id?: string;
+  employeeId?: number;
+  hospital_id?: number;
+  claim_number?: string;
+  admission_date?: string;
+  discharge_date?: string;
+  diagnosis?: string;
+  total_bill_amount?: number;
+  totalBillAmount?: number;
+  eligible_reimbursement_amount?: number | null;
+  approvedAmount?: number | null;
+  claim_status?: ClaimStatus;
+  current_stage?: number;
+  current_workflow_stage?: string;
+  submission_timestamp?: string | null;
+  last_updated_timestamp?: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface Document {

@@ -96,8 +96,20 @@ export function SignupPage() {
       password: formData.password,
     };
 
+    // Transform frontend field names to backend schema
+    const requestBody = {
+      fullName: body.name,
+      department: body.department,
+      profession: body.profession,
+      employeeId: body.employeeId,
+      contact: body.contact,
+      emailAddress: body.email,
+      role: body.role,
+      password: body.password,
+    };
+
     try {
-      await mrs.register(body);
+      await mrs.register(requestBody);
       toast.success("Account created successfully! Please login.");
       navigate('/login');
     } catch (error) {
