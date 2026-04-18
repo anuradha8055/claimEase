@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-
+from uuid import UUID
 from app.config.database import get_db
 from app.core.dependencies import get_current_scrutiny_officer
 from app.models.user_model import User
@@ -21,7 +21,7 @@ def get_queue(
     """All claims currently at SUBMITTED stage — scrutiny officer's pending queue."""
     return (
         db.query(Claim)
-        .filter(Claim.claim_status == ClaimStatus.SUBMITTED)
+        .filter(Claim.current_stage == 2)
         .order_by(Claim.created_at.asc())   # oldest first = most urgent
         .all()
     )
@@ -29,7 +29,7 @@ def get_queue(
 
 @router.post("/{claim_id}/approve", response_model=ClaimResponse)
 def approve(
-    claim_id: int,
+    claim_id: UUID,
     db:           Session = Depends(get_db),
     current_user: User    = Depends(get_current_scrutiny_officer),
 ):
@@ -44,7 +44,7 @@ def approve(
 
 @router.post("/{claim_id}/query", response_model=QueryResponse, status_code=201)
 def raise_query(
-    claim_id: int,
+    claim_id: UUID,
     payload:      QueryRaise,
     db:           Session = Depends(get_db),
     current_user: User    = Depends(get_current_scrutiny_officer),
@@ -64,9 +64,8 @@ def raise_query(
     query = Query(
         claim_id      = claim_id,
         raised_by     = current_user.user_id,
-        raised_stage  = "SCRUTINY_OFFICER",
-        query_message = payload.query_message,
-        sent_to_stage = "EMPLOYEE",
+        raised_stage  = 2,
+        query_text = payload.query_message,
         status        = "PENDING",
     )
     db.add(query)
@@ -77,7 +76,7 @@ def raise_query(
 
 @router.post("/{claim_id}/reject", response_model=ClaimResponse)
 def reject(
-    claim_id: int,
+    claim_id: UUID,
     db:           Session = Depends(get_db),
     current_user: User    = Depends(get_current_scrutiny_officer),
 ):

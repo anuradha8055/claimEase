@@ -1,14 +1,12 @@
 from pydantic import BaseModel, ConfigDict
 from datetime import datetime
-from typing import Optional
+from uuid import UUID
 
 class NotificationResponse(BaseModel):
-    notification_id: int
-    user_id: int
-    title: str
+    notification_id: UUID
+    user_id: UUID
     message: str
-    claim_id: Optional[int] = None
-    is_read: bool
+    notificationStatus: str  # e.g., 'Unread', 'Read'
     created_at: datetime
-
+    
     model_config = ConfigDict(from_attributes=True)

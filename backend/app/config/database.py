@@ -1,10 +1,15 @@
+from dotenv import load_dotenv
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 from sqlalchemy.ext.declarative import declarative_base
+
+load_dotenv()  # Load environment variables from .env file
 from app.config.settings import DATABASE_URL
 
 # Create database engine
-engine = create_engine(DATABASE_URL)   #python API- SQLAlchemy engine- PostgreSQL database : connection
+engine = create_engine(DATABASE_URL,
+                       pool_pre_ping=True,
+                       pool_recycle=3600)   #python API- SQLAlchemy engine- PostgreSQL database : connection
 
 # Create database session- temporary connection to perform database operations
 SessionLocal = sessionmaker(

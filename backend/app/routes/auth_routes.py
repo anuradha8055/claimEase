@@ -12,6 +12,7 @@ from app.utils.security import (
 )
 from app.models.roles_model import Role
 from app.core.dependencies import get_current_user
+from uuid import UUID
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
@@ -20,7 +21,7 @@ router = APIRouter(prefix="/auth", tags=["Auth"])
 def register(payload: UserRegister, db: Session = Depends(get_db)):
     """Register a new user. Role must already exist in the roles table."""
     #checking already registered or not 
-    if db.query(User).filter(User.email == payload.email).first():
+    if db.query(User).filter(User.emailAddress == payload.email).first():
         raise HTTPException(status_code=400, detail="Email already registered")
 
     role_record = db.query(Role).filter(Role.role_name == payload.role).first()
@@ -34,12 +35,12 @@ def register(payload: UserRegister, db: Session = Depends(get_db)):
     hashed_password = hash_password(payload.password)
 
     new_user = User(
-        name           = payload.name,
+        fullName       = payload.name,
         department     = payload.department,
         profession     = payload.profession,
         employeeId    = payload.employeeId,
-        contact        = payload.contact,
-        email          = payload.email,
+        contactNo       = payload.contact,
+        emailAddress   = payload.email,
         role_id        = role_record.role_id,
         password_hash  = hashed_password,
     )
@@ -75,7 +76,7 @@ def register(payload: UserRegister, db: Session = Depends(get_db)):
 @router.post("/login", response_model=TokenResponse)
 def login(payload: UserLogin, db: Session = Depends(get_db)):
     """Login with email + password. Returns access + refresh tokens."""
-    user = db.query(User).filter(User.email == payload.email).first()
+    user = db.query(User).filter(User.emailAddress == payload.email).first()
     if not user or not verify_password(payload.password, user.password_hash):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or password")
 
@@ -83,7 +84,7 @@ def login(payload: UserLogin, db: Session = Depends(get_db)):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Account is not active")
 
     role_name = user.role.role_name if user.role else ""
-    access    = create_access_token(user.user_id, role_name, user.name)
+    access    = create_access_token(user.user_id, role_name, user.fullName)
     refresh   = create_refresh_token(user.user_id)
 
     # Store refresh token in DB for rotation

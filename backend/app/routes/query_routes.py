@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-
+from uuid import UUID
 from app.config.database import get_db
 from app.core.dependencies import get_current_employee, get_current_user
 from app.models.user_model import User
@@ -28,7 +28,7 @@ def my_pending_queries(
         db.query(Query)
         .join(Claim, Query.claim_id == Claim.claim_id)
         .filter(
-            Claim.employeeId == employee.employeeId,
+            Claim.user_id == current_user.user_id,
             Query.status == "PENDING"
         )
         .all()
@@ -37,7 +37,7 @@ def my_pending_queries(
 
 @router.post("/{query_id}/respond", response_model=QueryResponse)
 def respond_to_query(
-    query_id: int,
+    query_id: UUID,
     payload:      QueryRespond,
     db:           Session = Depends(get_db),
     current_user: User    = Depends(get_current_employee),

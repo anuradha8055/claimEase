@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
-
+from uuid import UUID
 from app.config.database import get_db
 from app.core.dependencies import get_current_user, get_current_employee
 from app.models.user_model import User
@@ -44,7 +44,7 @@ def get_my_claims(
 # ========== GET/POST routes with path parameters (must come AFTER literal paths) ==========
 @router.post("/{claim_id}/submit", response_model=ClaimResponse)
 def submit_claim(
-    claim_id: int,
+    claim_id: UUID,
     db:           Session = Depends(get_db),
     current_user: User    = Depends(get_current_employee),
 ):
@@ -54,7 +54,7 @@ def submit_claim(
 
 @router.get("/{claim_id}/status", response_model=ClaimStatusResponse)
 def claim_status(
-    claim_id: int,
+    claim_id: UUID,
     db:           Session = Depends(get_db),
     current_user: User    = Depends(get_current_user),
 ):
@@ -62,14 +62,14 @@ def claim_status(
     claim = claim_service.get_claim(db, claim_id)
     return ClaimStatusResponse(
         claim_id      = claim.claim_id,
-        claim_status  = claim.claim_status.value,
-        current_stage = claim.current_stage.value,
+        claim_status  = claim.claim_status,
+        current_stage = claim.current_stage,
     )
 
 
 @router.get("/{claim_id}", response_model=ClaimResponse)
 def get_claim(
-    claim_id: int,
+    claim_id: UUID,
     db:           Session = Depends(get_db),
     current_user: User    = Depends(get_current_user),
 ):

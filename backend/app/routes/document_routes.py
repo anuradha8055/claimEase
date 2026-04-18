@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, UploadFile, File, Form, HTTPException
 from sqlalchemy.orm import Session
-
+from uuid import UUID
 from app.config.database import get_db
 from app.core.dependencies import get_current_employee, get_current_user
 from app.models.user_model import User
@@ -13,8 +13,8 @@ router = APIRouter(prefix="/documents", tags=["Documents"])
 
 @router.post("/upload", response_model=DocumentResponse, status_code=201)
 async def upload_document(
-    claim_id:         int        = Form(...),
-    document_type_id: int        = Form(...),
+    claim_id:         UUID       = Form(...),
+    documentType:     str       = Form(...),
     file:             UploadFile = File(...),
     db:               Session    = Depends(get_db),
     current_user:     User       = Depends(get_current_employee),
@@ -37,18 +37,16 @@ async def upload_document(
 
     # Core security step: compute hash BEFORE saving
     file_hash = hash_file(file_bytes)
-    file_path = save_file_locally(file_bytes, claim_id, file.filename)
+    file_path = save_file_locally(file_bytes, str(claim_id), file.filename)
 
     doc = Document(
         claim_id         = claim_id,
-        document_type_id = document_type_id,
-        file_name        = file.filename,
-        file_type        = ext,
-        file_size        = len(file_bytes),
-        file_hash        = file_hash,
-        file_path        = file_path,
-        uploaded_by      = current_user.user_id,
+        documentType     = documentType,
+        fileSize        = len(file_bytes),
+        fileHash        = file_hash,
+        filePath        = file_path,
         is_tampered      = False,
+        uploadedTime     = None
     )
     db.add(doc)
     db.commit()
@@ -58,7 +56,7 @@ async def upload_document(
 
 @router.get("/claim/{claim_id}", response_model=list[DocumentResponse])
 def get_claim_documents(
-    claim_id:     int,
+    claim_id:     UUID,
     db:           Session = Depends(get_db),
     current_user: User    = Depends(get_current_user),
 ):
@@ -68,7 +66,7 @@ def get_claim_documents(
 
 @router.post("/{document_id}/verify", response_model=DocumentVerifyResponse)
 def verify_document(
-    document_id:  int,
+    document_id:  UUID,
     db:           Session = Depends(get_db),
     current_user: User    = Depends(get_current_user),
 ):
@@ -83,15 +81,15 @@ def verify_document(
     if not doc:
         raise HTTPException(status_code=404, detail="Document not found")
 
-    file_bytes = read_file(doc.file_path)
+    file_bytes = read_file(doc.filePath)
     if file_bytes is None:
         raise HTTPException(status_code=404, detail="Physical file not found on server")
 
     recomputed   = hash_file(file_bytes)
-    hash_matched = recomputed == doc.file_hash
+    hash_matched = recomputed == doc.fileHash
 
-    doc.verified_by = current_user.user_id
-    doc.verified_at = datetime.now(timezone.utc)
+    #doc.verified_by = current_user.user_id
+    #doc.verified_at = datetime.now(timezone.utc)
     doc.is_tampered = not hash_matched
     db.commit()
 

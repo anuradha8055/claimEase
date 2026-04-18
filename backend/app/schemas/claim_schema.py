@@ -8,36 +8,22 @@ RelationType= Literal["Father", "Mother", "Husband", "Wife","Son", "Daughter","B
 
 # --- Base Shared Fields ---
 class ClaimBase(BaseModel):
-    #patient details
-    patient_name: str
-    relation: RelationType
-    patient_gender: str
-    patient_dob: date       
-
-    # Hospital details - now required from user input
-    hospital_name: str  # Required: hospital name
-    hospital_type: Optional[str] = None  # e.g., Private, Government, NGO
-    hospital_address: Optional[str] = None  # Full address
-    hospital_city: Optional[str] = None
-    hospital_state: Optional[str] = None
-    hospital_pincode: Optional[str] = None
-    hospital_contact_number: Optional[str] = None
-
-    #medical details
-    doctor_name: Optional[str] = None
-    doctor_qualification: Optional[str] = None
-    diagnosis: str  
-    treatment_details: Optional[str] = None    
-    admission_date: date
-    discharge_date: date
-    is_emergency: bool = False
-    total_bill_amount: Decimal = Field(..., max_digits=12, decimal_places=2)
-    
+    totalBillAmount: Decimal = Field(..., max_digits=12, decimal_places=2)
+    isEmergency: bool = False
   
 
 # --- For the EMPLOYEE: Creating a claim ---
 class ClaimCreate(ClaimBase):
-    pass # Employees only fill the Base fields initially
+        # Flattened payload for easy React integration
+    patientName: str
+    relation: str
+    patientGender: str
+    patientBirthDate: date
+    hospitalName: str
+    hospitalType: str
+    admissionDate: date
+    dischargeDate: date
+    diagnosis: str
 
 # --- For the MEDICAL OFFICER: Approving/Calculating amount ---
 class ClaimMedicalUpdate(BaseModel):
@@ -64,13 +50,13 @@ class ClaimRead(ClaimBase):
     model_config = ConfigDict(from_attributes=True) # Allows Pydantic to read SQLAlchemy objects
 
 class ClaimResponse(ClaimBase):
-    """Response model for claim details"""
-    claim_id: int
-    eligible_amount: Optional[Decimal] = None
-    claim_status: ClaimStatus
-    employeeId: int
-    created_at: Optional[datetime] = None
-    updated_at: Optional[datetime] = None
+    claim_id: UUID
+    user_id: UUID
+    current_stage: int
+    assigned_to_role_id: Optional[int] = None
+    approvedAmount: Optional[Decimal] = None
+    created_at: datetime
+    updated_at: datetime
     
     model_config = ConfigDict(from_attributes=True)
 

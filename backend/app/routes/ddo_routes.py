@@ -1,11 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-
+from uuid import UUID
 from app.config.database import get_db
 from app.core.dependencies import get_current_ddo
 from app.models.user_model import User
 from app.models.claim_model import Claim, ClaimStatus
-from app.models.payment_model import Payment
 from app.schemas.claim_schema import ClaimResponse
 from app.services.workflow_service import transition
 
@@ -20,7 +19,7 @@ def get_queue(
     """All claims at FINANCE_APPROVED stage — DDO's pending queue."""
     return (
         db.query(Claim)
-        .filter(Claim.claim_status == ClaimStatus.FINANCE_APPROVED)
+        .filter(Claim.current_stage == 5)
         .order_by(Claim.created_at.asc())
         .all()
     )
@@ -28,7 +27,7 @@ def get_queue(
 
 @router.post("/{claim_id}/sanction", response_model=ClaimResponse)
 def sanction(
-    claim_id: int,
+    claim_id: UUID,
     db:           Session = Depends(get_db),
     current_user: User    = Depends(get_current_ddo),
 ):
@@ -41,26 +40,15 @@ def sanction(
     if not claim:
         raise HTTPException(status_code=404, detail="Claim not found")
 
-    if claim.eligible_amount is None:
+    if claim.approvedAmount is None:
         raise HTTPException(
             status_code=400,
-            detail="Eligible amount not set. Finance officer must approve first."
+            detail="Approved amount not set. Finance officer must approve first."
         )
-
-    # Create payment record
-    payment = Payment(
-        claim_id        = claim_id,
-        approved_amount = claim.eligible_amount,
-        payment_status  = "INITIATED",
-        payment_method  = "PFMS",
-        processed_by    = current_user.user_id,
-    )
-    db.add(payment)
-    db.commit()
 
     # Transition: FINANCE_APPROVED → DDO_SANCTIONED → PAYMENT_PROCESSED
     claim = transition(db, claim_id, ClaimStatus.DDO_SANCTIONED, current_user,
-                       remarks=f"DDO sanctioned ₹{claim.eligible_amount}")
+                       remarks=f"DDO sanctioned ₹{claim.approvedAmount}")
     claim = transition(db, claim_id, ClaimStatus.PAYMENT_PROCESSED, current_user,
                        remarks="Payment initiated via PFMS")
 
@@ -79,4 +67,4 @@ def sanctioned_claims(
         .all()
     )
     return [{"claim_id": c.claim_id,
-             "eligible_amount": float(c.eligible_amount or 0)} for c in claims]
+             "approved_amount": float(c.approvedAmount or 0)} for c in claims]

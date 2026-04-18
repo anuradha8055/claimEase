@@ -3,13 +3,12 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
-
+from uuid import UUID
 from app.config.database import get_db
 from app.core.dependencies import get_current_finance_officer
 from app.models.user_model import User
 from app.models.claim_model import Claim, ClaimStatus
-from app.models.entitlement_rule_model import EntitlementRule
-from app.models.hospitals_model import Hospital
+from app.models.hospitals_model import Hospital, HospitalDetails
 from app.schemas.claim_schema import ClaimResponse
 from app.services.workflow_service import transition
 
@@ -26,35 +25,13 @@ def _calculate_eligible_amount(db: Session, claim: Claim) -> dict:
     Runs the entitlement rules engine against the claim.
     Returns breakdown and total eligible amount.
     """
-    hospital = db.query(Hospital).filter(Hospital.hospital_id == claim.hospital_id).first()
-    tier     = hospital.empanelment_tier if hospital else None
-
-    rules       = db.query(EntitlementRule).filter(
-        EntitlementRule.effective_to == None  # active rules only
-    ).all()
-
-    total_eligible = Decimal("0.00")
-    breakdown      = []
-
-    for rule in rules:
-        cond   = rule.conditions or {}
-        # Basic condition matching
-        if "empanelment_tier" in cond and cond["empanelment_tier"] != tier:
-            continue
-
-        cap    = rule.max_amount
-        amount = min(claim.claimed_amount, cap)
-        total_eligible += amount
-        breakdown.append({
-            "rule":     rule.rule_name,
-            "category": rule.category,
-            "cap":      float(cap),
-            "applied":  float(amount),
-        })
+    hospital = db.query(HospitalDetails).filter(HospitalDetails.claim_id == claim.claim_id).first()
+   
+    system_calculated = claim.totalBillAmount
 
     return {
-        "system_calculated": float(total_eligible),
-        "breakdown":         breakdown,
+        "system_calculated": float(system_calculated),
+        "hospital_name":         hospital.hospitalName if hospital else None,
         "claimed_amount":    float(claim.claimed_amount),
     }
 
@@ -67,7 +44,7 @@ def get_queue(
     """All claims at MEDICAL_APPROVED stage."""
     return (
         db.query(Claim)
-        .filter(Claim.claim_status == ClaimStatus.MEDICAL_APPROVED)
+        .filter(Claim.current_stage == 4)
         .order_by(Claim.created_at.asc())
         .all()
     )
@@ -75,7 +52,7 @@ def get_queue(
 
 @router.get("/{claim_id}/calculate")
 def calculate_entitlement(
-    claim_id: int,
+    claim_id: UUID,
     db:           Session = Depends(get_db),
     current_user: User    = Depends(get_current_finance_officer),
 ):
@@ -91,7 +68,7 @@ def calculate_entitlement(
 
 @router.post("/{claim_id}/approve", response_model=ClaimResponse)
 def approve(
-    claim_id: int,
+    claim_id: UUID,
     payload:      FinanceApproval,
     db:           Session = Depends(get_db),
     current_user: User    = Depends(get_current_finance_officer),
@@ -110,12 +87,12 @@ def approve(
                 status_code=400,
                 detail="override_reason is required when overriding the calculated amount"
             )
-        claim.eligible_amount = payload.override_amount
+        claim.approvedAmount= payload.override_amount
         remarks = f"Finance approved with override: ₹{payload.override_amount}. Reason: {payload.override_reason}"
     else:
         calc = _calculate_eligible_amount(db, claim)
-        claim.eligible_amount = Decimal(str(calc["system_calculated"]))
-        remarks = f"Finance approved — system calculated eligible amount: ₹{claim.eligible_amount}"
+        claim.approvedAmount = Decimal(str(calc["system_calculated"]))
+        remarks = f"Finance approved — system calculated eligible amount: ₹{claim.approvedAmount}"
 
     db.commit()
 
@@ -124,7 +101,7 @@ def approve(
 
 @router.post("/{claim_id}/reject", response_model=ClaimResponse)
 def reject(
-    claim_id: int,
+    claim_id: UUID,
     db:           Session = Depends(get_db),
     current_user: User    = Depends(get_current_finance_officer),
 ):

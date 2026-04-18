@@ -14,15 +14,15 @@ class QueryRespond(BaseModel):
 
 
 class QueryResponse(BaseModel):
+    query_id: UUID
+    claim_id: UUID
+    raised_by: UUID
+    raised_stage: int
+    query_text: str
+    status: str
+    response_text: Optional[str] = None
+    created_at: datetime
+    responded_at: Optional[datetime] = None
+    resolved_at: Optional[datetime] = None
+    
     model_config = ConfigDict(from_attributes=True)
-
-    query_id:      int
-    claim_id:      int
-    raised_by:     int
-    raised_stage:  str
-    query_message: str
-    status:        str
-    response_text: Optional[str]
-    created_at:    datetime
-    resolved_at:   Optional[datetime]
-    responded_at:  Optional[datetime]

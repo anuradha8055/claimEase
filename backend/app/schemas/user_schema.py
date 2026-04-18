@@ -3,10 +3,10 @@ from typing import Optional
 from datetime import datetime
 
 class UserBase(BaseModel):
-    email: EmailStr
-    name: str
+    emailAddress: EmailStr
+    fullName: str
     role_id: int
-    contact: Optional[str] = None
+    contactNo: Optional[str] = None
 
 class UserCreate(UserBase):
     password: str # Plain text from frontend, hashed in service
@@ -28,8 +28,6 @@ class UserRegister(BaseModel):
     email: EmailStr
     role: str
     password: str
-    
-    
 
 class UserLogin(BaseModel):
     """Schema for user login"""
@@ -37,18 +35,13 @@ class UserLogin(BaseModel):
     password: str
 
 class UserResponse(BaseModel):
-    """Schema for user response"""
-    user_id: int
-    email: EmailStr
-    name: str
-    department: str
-    profession: str
-    employeeId: Optional[str] = None
-    contact: Optional[str] = None
-    role_id: int
-    account_status: str = "ACTIVE"
-    created_at: datetime
-    last_login: Optional[datetime] = None
+    user_id: UUID
+    department: Optional[str] = None
+    designation: Optional[str] = None
+    employeeId: str
+    accountStatus: str
+    createdAt: datetime
+    lastLogin: Optional[datetime] = None
     
     model_config = ConfigDict(from_attributes=True)
 

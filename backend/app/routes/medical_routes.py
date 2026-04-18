@@ -1,11 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-
+from uuid import UUID
 from app.config.database import get_db
 from app.core.dependencies import get_current_medical_officer
 from app.models.user_model import User
 from app.models.claim_model import Claim, ClaimStatus
-from app.models.hospitals_model import Hospital
+from app.models.hospitals_model import Hospital, HospitalDetails
 from app.models.query_model import Query
 from app.schemas.claim_schema import ClaimResponse
 from app.schemas.query_schema import QueryRaise, QueryResponse
@@ -22,7 +22,7 @@ def get_queue(
     """All claims at SCRUTINY_APPROVED stage."""
     return (
         db.query(Claim)
-        .filter(Claim.claim_status == ClaimStatus.SCRUTINY_APPROVED)
+        .filter(Claim.current_stage == 3)
         .order_by(Claim.created_at.asc())
         .all()
     )
@@ -30,7 +30,7 @@ def get_queue(
 
 @router.get("/{claim_id}/hospital-check")
 def hospital_empanelment_check(
-    claim_id: int,
+    claim_id: UUID,
     db:           Session = Depends(get_db),
     current_user: User    = Depends(get_current_medical_officer),
 ):
@@ -42,23 +42,21 @@ def hospital_empanelment_check(
     if not claim:
         raise HTTPException(status_code=404, detail="Claim not found")
 
-    hospital = db.query(Hospital).filter(Hospital.hospital_id == claim.hospital_id).first()
+    hospital = db.query(HospitalDetails).filter(HospitalDetails.claim_id == claim_id).first()
     if not hospital:
         raise HTTPException(status_code=404, detail="Hospital not found")
 
     return {
-        "hospital_name":    hospital.hospital_name,
-        "is_empanelled":    hospital.is_empanelled,
-        "empanelment_tier": hospital.empanelment_tier,
-        "warning":          None if hospital.is_empanelled
-                            else "WARNING: This hospital is NOT on the government empanelled list. "
-                                 "Additional justification required before approval."
+        "hospital_name":    hospital.hospitalName,
+        "hospital_type":    hospital.hospitalType,
+        "admission_date":   hospital.admissionDate,
+        "discharge_date":   hospital.dischargeDate,
     }
 
 
 @router.post("/{claim_id}/approve", response_model=ClaimResponse)
 def approve(
-    claim_id: int,
+    claim_id: UUID,
     db:           Session = Depends(get_db),
     current_user: User    = Depends(get_current_medical_officer),
 ):
@@ -73,7 +71,7 @@ def approve(
 
 @router.post("/{claim_id}/query", response_model=QueryResponse, status_code=201)
 def raise_query(
-    claim_id: int,
+    claim_id: UUID,
     payload:      QueryRaise,
     db:           Session = Depends(get_db),
     current_user: User    = Depends(get_current_medical_officer),
@@ -83,11 +81,11 @@ def raise_query(
                remarks=f"Medical query: {payload.query_message}")
 
     query = Query(
+        query_id      = None,
         claim_id      = claim_id,
         raised_by     = current_user.user_id,
-        raised_stage  = "MEDICAL_OFFICER",
-        query_message = payload.query_message,
-        sent_to_stage = "EMPLOYEE",
+        raised_stage  = 3,
+        query_text = payload.query_message,
         status        = "PENDING",
     )
     db.add(query)
@@ -98,7 +96,7 @@ def raise_query(
 
 @router.post("/{claim_id}/reject", response_model=ClaimResponse)
 def reject(
-    claim_id: int,
+    claim_id: UUID,
     db:           Session = Depends(get_db),
     current_user: User    = Depends(get_current_medical_officer),
 ):

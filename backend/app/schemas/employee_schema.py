@@ -1,18 +1,20 @@
 from pydantic import BaseModel, ConfigDict
 from decimal import Decimal
+from datetime import date
+from uuid import UUID
 from typing import Optional
 
 class EmployeeBase(BaseModel):
-    department: str
-    profession: str
-    pay_level: Optional[int] = None
-    grade_pay: Optional[Decimal] = None
-
-class EmployeeCreate(EmployeeBase):
-    user_id: int
+    panNumber: Optional[str] = None
+    bankAccount: Optional[str] = None
+    ifscCode: Optional[str] = None
+    gradePay: Optional[Decimal] = None
+    basicPay: Optional[Decimal] = None
+    dateOfJoining: Optional[date] = None
+    officeLocation: Optional[str] = None
 
 class EmployeeResponse(EmployeeBase):
-    employeeId: int
-    user_id: int
+    id: UUID
+    user_id: UUID
     
     model_config = ConfigDict(from_attributes=True)
