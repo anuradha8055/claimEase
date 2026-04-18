@@ -10,3 +10,5 @@ from app.models.payment_model import Payment
 from app.models.treatment_model import Treatment
 from app.models.audit_logs_model import AuditLog
 from app.models.entitlement_rule_model import EntitlementRule
+from app.models.workflow_model import ClaimWorkflowLog
+from app.models.notifications_model import Notification

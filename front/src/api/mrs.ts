@@ -33,6 +33,11 @@ export async function login(email: string, password: string) {
     return data.access_token;
 }
 
+export async function getCurrentUser() {
+    const { data } = await api.get<User>('/auth/me');
+    return data;
+}
+
 export async function register(body: {
     name: string;
     department: string;

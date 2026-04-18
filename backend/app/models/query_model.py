@@ -1,25 +1,29 @@
-from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, func
+from sqlalchemy import Column, String, Text, DateTime, ForeignKey, Integer, func
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
+import uuid
 from app.config.database import Base
-
 
 class Query(Base):
     __tablename__ = "queries"
 
-    query_id        = Column(Integer, primary_key=True, autoincrement=True)
-    claim_id        = Column(Integer, ForeignKey("claims.claim_id"), nullable=False)
-    raised_by       = Column(Integer, ForeignKey("users.user_id"), nullable=False)
-    raised_stage    = Column(String(50), nullable=False)  # which level raised it
-    query_message   = Column(Text, nullable=False)
-    sent_to_stage   = Column(String(50), nullable=False)  # always 'EMPLOYEE'
-    status          = Column(String(50), nullable=False, default="PENDING")
-    created_at      = Column(DateTime, nullable=False, server_default=func.now())
-    resolved_at     = Column(DateTime)
-
-    # Employee's reply — added
-    response_text   = Column(Text)
-    responded_at    = Column(DateTime)
+    query_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    claim_id = Column(UUID(as_uuid=True), ForeignKey("claims.claim_id"), nullable=False)
+    raised_by = Column(UUID(as_uuid=True), ForeignKey("users.user_id"), nullable=False)
+    
+    # Workflow Context
+    raised_stage = Column(Integer)  # Stage index (1-5)
+    sent_to_stage = Column(Integer, default=1) # Usually sent back to Stage 1 (Employee)
+    
+    # Content
+    query_text = Column(Text, nullable=False)
+    response_text = Column(Text)
+    status = Column(String(50), default="Open") # Open, Responded, Resolved
+    
+    # Separate Timestamps
+    created_at = Column(DateTime, server_default=func.now())
+    responded_at = Column(DateTime)
+    resolved_at = Column(DateTime)
 
     # Relationships
-    claim      = relationship("Claim", back_populates="queries")
-    raised_by_user = relationship("User", foreign_keys=[raised_by])
+    claim = relationship("Claim", back_populates="queries")

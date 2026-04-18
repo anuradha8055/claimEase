@@ -46,7 +46,7 @@ class UserResponse(BaseModel):
     employeeId: Optional[str] = None
     contact: Optional[str] = None
     role_id: int
-    
+    account_status: str = "ACTIVE"
     created_at: datetime
     last_login: Optional[datetime] = None
     

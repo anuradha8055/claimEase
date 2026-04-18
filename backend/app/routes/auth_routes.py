@@ -11,6 +11,7 @@ from app.utils.security import (
     create_access_token, create_refresh_token, decode_token
 )
 from app.models.roles_model import Role
+from app.core.dependencies import get_current_user
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
@@ -46,15 +47,27 @@ def register(payload: UserRegister, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(new_user)
     
+    # Create Employee profile if role is EMPLOYEE
     if payload.role.upper() == "EMPLOYEE":
         from app.models.employees_model import Employee
-        new_employee = Employee(
-            user_id = new_user.user_id,
-            department = payload.department,
-            designation = payload.profession
-        )
-        db.add(new_employee)
-        db.commit()
+        try:
+            new_employee = Employee(
+                user_id = new_user.user_id,
+                department = payload.department,
+                designation = payload.profession
+            )
+            db.add(new_employee)
+            db.commit()
+            db.refresh(new_employee)
+        except Exception as e:
+            db.rollback()
+            # Delete the user if employee creation fails
+            db.delete(new_user)
+            db.commit()
+            raise HTTPException(
+                status_code=500,
+                detail=f"Failed to create employee profile: {str(e)}"
+            )
 
     return new_user
 
@@ -127,3 +140,9 @@ def logout(db: Session = Depends(get_db), request: Request = None):
             user.refresh_token = None
             db.commit()
     return {"message": "Logged out successfully"}
+
+
+@router.get("/me", response_model=UserResponse)
+def get_current_user_profile(current_user: User = Depends(get_current_user)):
+    """Get current authenticated user's profile from database."""
+    return current_user

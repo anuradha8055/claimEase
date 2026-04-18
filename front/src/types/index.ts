@@ -6,7 +6,13 @@ export interface User {
   email: string;
   role: UserRole;
   account_status: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED';
-  last_login: string | null;
+  last_login?: string | null;
+  department?: string;
+  profession?: string;
+  employeeId?: string;
+  contact?: string;
+  role_id?: number;
+  created_at?: string;
 }
 
 export interface Employee {

@@ -11,6 +11,7 @@ from app.models.claim_model import Claim
 router = APIRouter(prefix="/claims", tags=["Claims"])
 
 
+# ========== POST routes ==========
 @router.post("/create_claim", response_model=ClaimResponse, status_code=status.HTTP_201_CREATED)
 def create_claim(
     payload: ClaimCreate,
@@ -21,16 +22,7 @@ def create_claim(
     return claim_service.create_claim(db, payload, current_user.user_id)
 
 
-@router.post("/{claim_id}/submit", response_model=ClaimResponse)
-def submit_claim(
-    claim_id: int,
-    db:           Session = Depends(get_db),
-    current_user: User    = Depends(get_current_employee),
-):
-    """Employee submits a DRAFT claim — assigns inward number, moves to SUBMITTED."""
-    return claim_service.submit_claim(db, claim_id, current_user.user_id)
-
-
+# ========== GET routes with literal paths (MUST come before parameterized routes) ==========
 @router.get("/my", response_model=list[ClaimResponse])
 def my_claims(
     db:           Session = Depends(get_db),
@@ -40,14 +32,24 @@ def my_claims(
     return claim_service.get_my_claims(db, current_user.user_id)
 
 
-@router.get("/{claim_id}", response_model=ClaimResponse)
-def get_claim(
+@router.get("/my-claims", response_model=list[ClaimResponse])
+def get_my_claims(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_employee)
+):
+    """Get all claims created by the current employee."""
+    return claim_service.get_my_claims(db, current_user.user_id)
+
+
+# ========== GET/POST routes with path parameters (must come AFTER literal paths) ==========
+@router.post("/{claim_id}/submit", response_model=ClaimResponse)
+def submit_claim(
     claim_id: int,
     db:           Session = Depends(get_db),
-    current_user: User    = Depends(get_current_user),
+    current_user: User    = Depends(get_current_employee),
 ):
-    """Get full claim details. Accessible by any authenticated user."""
-    return claim_service.get_claim(db, claim_id)
+    """Employee submits a DRAFT claim — assigns inward number, moves to SUBMITTED."""
+    return claim_service.submit_claim(db, claim_id, current_user.user_id)
 
 
 @router.get("/{claim_id}/status", response_model=ClaimStatusResponse)
@@ -64,10 +66,12 @@ def claim_status(
         current_stage = claim.current_stage.value,
     )
 
-@router.get("/my-claims", response_model=list[ClaimResponse])
-def get_my_claims(
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_employee)
+
+@router.get("/{claim_id}", response_model=ClaimResponse)
+def get_claim(
+    claim_id: int,
+    db:           Session = Depends(get_db),
+    current_user: User    = Depends(get_current_user),
 ):
-    """Get all claims created by the current employee."""
-    return db.query(Claim).filter(Claim.employeeID == current_user.user_id).all()
+    """Get full claim details. Accessible by any authenticated user."""
+    return claim_service.get_claim(db, claim_id)

@@ -13,30 +13,42 @@ def create_claim(db: Session, payload: ClaimCreate, user_id: int) -> Claim:
     if not employee:
         raise HTTPException(status_code=404, detail="Employee profile not found for this user")
 
-    #calculate age
+    # Calculate age
     today = date.today()
     calculated_age = today.year - payload.patient_dob.year - (
         (today.month, today.day) < (payload.patient_dob.month, payload.patient_dob.day)
     )
 
+    # Create claim with hospital info stored directly (no FK validation)
     claims = Claim(
         employeeId       = employee.employeeId,
-        hospital_id       = payload.hospital_id,
-        admission_date    = payload.admission_date,
-        discharge_date    = payload.discharge_date,
-        diagnosis         = payload.diagnosis,
-        total_bill_amount = payload.total_bill_amount,
+        # Hospital info stored directly - no database lookup required
+        hospital_name    = payload.hospital_name,
+        hospital_type    = payload.hospital_type,
+        hospital_address = payload.hospital_address,
+        hospital_city    = payload.hospital_city,
+        hospital_state   = payload.hospital_state,
+        hospital_pincode = payload.hospital_pincode,
+        hospital_contact_number = payload.hospital_contact_number,
+        # Patient info
+        patient_name     = payload.patient_name,
+        relation         = payload.relation,
+        patient_gender   = payload.patient_gender,
+        patient_dob      = payload.patient_dob,    
+        patient_age      = calculated_age,
+        # Treatment info
+        admission_date   = payload.admission_date,
+        discharge_date   = payload.discharge_date,
+        diagnosis        = payload.diagnosis,
         treatment_details = payload.treatment_details,
-        is_emergency      = payload.is_emergency,
-        patient_name      = payload.patient_name,
-        relation          = payload.relation,
-        patient_gender    = payload.patient_gender,
-        patient_dob       = payload.patient_dob,    
-        patient_age       = calculated_age,
-        doctor_name       = payload.doctor_name,
+        is_emergency     = payload.is_emergency,
+        doctor_name      = payload.doctor_name,
         doctor_qualification = payload.doctor_qualification,
-        claim_status      = ClaimStatus.DRAFT,
-        current_stage     = ClaimStatus.DRAFT,
+        # Financials
+        total_bill_amount = payload.total_bill_amount,
+        # Status
+        claim_status     = ClaimStatus.DRAFT,
+        current_stage    = ClaimStatus.DRAFT,
     )
     db.add(claims)
     db.commit()

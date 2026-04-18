@@ -32,6 +32,10 @@ export const LoginPage: React.FC = () => {
 
       //save token in local storage and context
       login(token);
+      
+      // Fetch user profile from database
+      const userProfile = await mrs.getCurrentUser();
+      
       toast.success('Welcome back!');
       
       switch (role) {

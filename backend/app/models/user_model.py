@@ -1,6 +1,8 @@
 import enum
-from sqlalchemy import Column, Integer, String, Enum as SAEnum, DateTime, ForeignKey, func
+from sqlalchemy import Column, String, DateTime, ForeignKey, func, Enum as SAEnum
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
+import uuid
 from app.config.database import Base
 
 class AccountStatus(str, enum.Enum):
@@ -8,42 +10,29 @@ class AccountStatus(str, enum.Enum):
     INACTIVE = "INACTIVE"
     SUSPENDED = "SUSPENDED"
 
-class userRole(str, enum.Enum):
-    EMPLOYEE = "EMPLOYEE"
-    SCRUTINY_OFFICER = "SCRUTINY_OFFICER"
-    MEDICAL_OFFICER = "MEDICAL_OFFICER"
-    FINANCE_OFFICER = "FINANCE_OFFICER"
-    DDO="DDO"
-  
+class Role(Base):
+    __tablename__ = "roles"
+    role_id = Column(Integer, primary_key=True)
+    role_name = Column(String, nullable=False)
+    users = relationship("User", back_populates="role")
 
 class User(Base):
     __tablename__ = "users"
-
-    user_id        = Column(Integer, primary_key=True, autoincrement=True)
-    name           = Column(String(150), nullable=False) # Added: Needed for UI "Assigned to: Name"
-    department     = Column(String(100))
-    profession     = Column(String(100))
-    employeeId    = Column(String(50), unique=True)  # Only for Employees, null for others
-    contact        = Column(String(15))
-    email          = Column(String(100), unique=True, nullable=False, index=True)
-    role_id        = Column(Integer, ForeignKey("roles.role_id"), nullable=False)
-    password_hash  = Column(String(255), nullable=False)
-
-
-    account_status = Column(
-        SAEnum(AccountStatus, name="account_status_enum"),
-        nullable=False,
-        default=AccountStatus.ACTIVE
-    )
+    user_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    fullName = Column(String(150), nullable=False)
+    department = Column(String(100))
+    designation = Column(String(100))
+    employeeId = Column(String(50), unique=True, nullable=False)
+    contactNo = Column(String(15))
+    emailAddress = Column(String(100), unique=True, nullable=False, index=True)
+    password = Column(String(255), nullable=False)
+    role_id = Column(Integer, ForeignKey("roles.role_id"))
     
-    created_at     = Column(DateTime, nullable=False, server_default=func.now())
-    last_login     = Column(DateTime)
+    accountStatus = Column(SAEnum(AccountStatus), default=AccountStatus.ACTIVE)
+    refreshToken = Column(String, nullable=True)
+    refreshTokenExpiresAt = Column(DateTime, nullable=True)
+    lastLogin = Column(DateTime)
+    createdAt = Column(DateTime, server_default=func.now())
     
-    # JWT Refresh Logic
-    refresh_token             = Column(String, nullable=True)
-    refresh_token_expires_at  = Column(DateTime, nullable=True)
-
-    # Relationships
-    role     = relationship("Role", back_populates="users")
-    # One-to-one: Only users with the 'Employee' role will have this profile populated
-    employee = relationship("Employee", back_populates="user", uselist=False)
+    role = relationship("Role", back_populates="users")
+    employee_details = relationship("EmployeeDetails", back_populates="user", uselist=False)

@@ -14,11 +14,10 @@ class ClaimBase(BaseModel):
     patient_gender: str
     patient_dob: date       
 
-    #hospital details
-    hospital_id: int
-    hospital_name: Optional[str] = None
-    hospital_type: Optional[str] = None
-    hospital_address: Optional[str] = None
+    # Hospital details - now required from user input
+    hospital_name: str  # Required: hospital name
+    hospital_type: Optional[str] = None  # e.g., Private, Government, NGO
+    hospital_address: Optional[str] = None  # Full address
     hospital_city: Optional[str] = None
     hospital_state: Optional[str] = None
     hospital_pincode: Optional[str] = None

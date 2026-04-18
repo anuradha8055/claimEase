@@ -1,21 +1,34 @@
-from sqlalchemy import Column, Integer, String, Boolean, Date
+from sqlalchemy import Column, String, Date, ForeignKey, Text
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
+import uuid
 from app.config.database import Base
 
-
-class Hospital(Base):
-    __tablename__ = "hospitals"
-
-    hospital_id           = Column(Integer, primary_key=True, autoincrement=True)
-    hospital_name         = Column(String(200), nullable=False)
-    hospital_type         = Column(String(50),  nullable=False)  # 'GOVT', 'PRIVATE', 'TRUST'
-    city                  = Column(String(100), nullable=False)
-    state                 = Column(String(100), nullable=False)
-    hospital_contact_number = Column(String(20))
-    # Empanelment fields — added for medical officer auto-flag
-    is_empanelled         = Column(Boolean, nullable=False, default=False)
-    empanelment_tier      = Column(String(10))   # 'A', 'B', 'C' or None
-    empanelled_since      = Column(Date)
+class HospitalDetails(Base):
+    __tablename__ = "hospital_details"
+    
+    hospital_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    claim_id = Column(UUID(as_uuid=True), ForeignKey("claims.claim_id"), nullable=False)
+    
+    # Hospital Identity
+    hospitalName = Column(String(255), nullable=False)
+    hospitalType = Column(String(100)) # e.g., 'GOVT', 'PRIVATE'
+    
+    # Location
+    hospitalAddress = Column(Text)
+    hospitalCity = Column(String(100))
+    hospitalState = Column(String(100))
+    hospitalPincode = Column(String(10))
+    hospitalContactNo = Column(String(20))
+    
+    # Professional Details
+    doctorName = Column(String(255))
+    doctorQualification = Column(String(255))
+    treatmentDetails = Column(Text)
+    
+    # Timeline
+    admissionDate = Column(Date, nullable=False)
+    dischargeDate = Column(Date, nullable=False)
 
     # Relationships
-    claims = relationship("Claim", back_populates="hospital")
+    claim = relationship("Claim", back_populates="hospital")
