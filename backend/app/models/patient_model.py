@@ -14,11 +14,11 @@ class PatientDetails(Base):
     __tablename__ = "patient_details"
     patient_id = Column(PG_UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     claim_id = Column(PG_UUID(as_uuid=True), ForeignKey("claims.claim_id"), nullable=False)
-    patientName = Column("patient_name", String(255), nullable=False)
-    relation = Column(String(100))
-    birthDate = Column("birth_date", Date)
-    age = Column(Integer)
-    gender = Column(String(20))
-    diagnosis = Column(Text)
+    patientName = Column("patientname", String(255), nullable=False)
+    relation = Column("relation", String(100))
+    birthDate = Column("birthdate", Date)
+    age = Column("age", Integer)
+    gender = Column("gender", String(20))
+    diagnosis = Column("diagnosis", Text)
 
     claim = relationship("Claim", back_populates="patient")

@@ -8,4 +8,4 @@ class Role(Base):
     role_id = Column(Integer, primary_key=True)
     role_name = Column(String)
 
-    users = relationship("User", back_populates="role")
+    user = relationship("User", back_populates="role")

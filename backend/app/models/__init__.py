@@ -1,7 +1,7 @@
 # Import all models in proper order to ensure string references resolve correctly
 from app.models.roles_model import Role
 from app.models.user_model import User, AccountStatus
-from app.models.employees_model import Employee
+from app.models.employees_model import EmployeeDetails
 from app.models.patient_model import PatientDetails
 from app.models.hospitals_model import HospitalDetails
 from app.models.claim_model import Claim, ClaimStatus, CLAIM_TRANSITIONS
@@ -14,7 +14,7 @@ __all__ = [
     'Role',
     'User',
     'AccountStatus',
-    'Employee',
+    'EmployeeDetails',
     'PatientDetails',
     'HospitalDetails',
     'Claim',

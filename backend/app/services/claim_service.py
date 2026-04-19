@@ -2,7 +2,7 @@ from datetime import date, datetime, timezone
 from sqlalchemy.orm import Session
 from fastapi import HTTPException
 from app.models.claim_model import Claim, ClaimStatus
-from app.models.employees_model import Employee
+from app.models.employees_model import EmployeeDetails
 from app.schemas.claim_schema import ClaimCreate
 
 
@@ -74,8 +74,8 @@ def submit_claim(db: Session, claim_id: int, user_id: int) -> Claim:
         raise HTTPException(status_code=404, detail="Claim not found")
 
     # Verify ownership
-    employee = db.query(Employee).filter(Employee.user_id == user_id).first()
-    if not employee or claim.employeeId != employee.employeeId:
+    employee = db.query(EmployeeDetails).filter(EmployeeDetails.user_id == user_id).first()
+    if not employee or claim.user_id != employee.user_id:
         raise HTTPException(status_code=403, detail="You can only submit your own claims")
 
     actor = db.query(User).filter(User.user_id == user_id).first()
@@ -93,7 +93,7 @@ def get_claim(db: Session, claim_id: int) -> Claim:
 
 
 def get_my_claims(db: Session, user_id: int) -> list[Claim]:
-    employee = db.query(Employee).filter(Employee.user_id == user_id).first()
+    employee = db.query(EmployeeDetails).filter(EmployeeDetails.user_id == user_id).first()
     if not employee:
         return []
-    return db.query(Claim).filter(Claim.employeeId == employee.employeeId).all()
+    return db.query(Claim).filter(Claim.user_id == employee.user_id).all()

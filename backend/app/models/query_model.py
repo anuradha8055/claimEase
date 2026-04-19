@@ -13,12 +13,12 @@ class Query(Base):
     
     # Workflow Context
     raised_stage = Column(Integer)  # Stage index (1-5)
-    sent_to_stage = Column(Integer, default=1) # Usually sent back to Stage 1 (Employee)
     
     # Content
     query_text = Column(Text, nullable=False)
-    response_text = Column(Text)
     status = Column(String(50), default="Open") # Open, Responded, Resolved
+    response_text = Column(Text)
+
     
     # Separate Timestamps
     created_at = Column(DateTime, server_default=func.now())

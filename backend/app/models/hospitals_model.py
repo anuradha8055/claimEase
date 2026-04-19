@@ -31,4 +31,4 @@ class HospitalDetails(Base):
     dischargeDate = Column("dischargedate", Date, nullable=False)
 
     # Relationships
-    claim = relationship("Claim", back_populates="hospital")
+    claim = relationship("Claim", back_populates="hospital", uselist=False)

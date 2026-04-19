@@ -30,7 +30,7 @@ class User(Base):
     lastLogin = Column("lastlogin",DateTime)
     createdAt = Column("createdat",DateTime, server_default=func.now())
     
-    role = relationship("Role", back_populates="users")
-    employee_details = relationship("Employee", back_populates="user", uselist=False)
-    claims = relationship("Claim", back_populates="user")
+    role = relationship("Role", back_populates="user")
+    employee = relationship("EmployeeDetails", back_populates="user", uselist=False)
+    claim = relationship("Claim", back_populates="user")
     notifications = relationship("Notification", back_populates="user")

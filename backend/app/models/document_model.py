@@ -13,11 +13,12 @@ class Document(Base):
     __tablename__ = "upload_documents"
     document_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     claim_id = Column(UUID(as_uuid=True), ForeignKey("claims.claim_id"), nullable=False)
-    documentType = Column(String(50))
-    fileSize = Column(BigInteger)
-    fileHash = Column(String(256), nullable=False)
-    filePath = Column(String(500), nullable=False)
-    is_tampered = Column(Boolean, default=False)
-    uploadTime = Column(DateTime, server_default=func.now())
+    documentType = Column("documenttype", String(50))
+    fileSize = Column("filesize", BigInteger)
+    fileHash = Column("filehash", String(256), nullable=False)
+    filePath = Column("filepath", String(500), nullable=False)
+    uploadTime = Column("uploadtime", DateTime, server_default=func.now())
+    is_tampered = Column("is_tampered", Boolean, default=False)
+    
 
-    claim = relationship("Claim", back_populates="documents")
+    claim = relationship("Claim", back_populates="document")

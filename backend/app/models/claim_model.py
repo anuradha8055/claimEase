@@ -47,10 +47,10 @@ class Claim(Base):
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
 
-    user = relationship("User", back_populates="claims")
+    user = relationship("User", back_populates="claim")
     patient = relationship("PatientDetails", back_populates="claim", uselist=False)
     hospital = relationship("HospitalDetails", back_populates="claim", uselist=False)
-    documents = relationship("Document", back_populates="claim")
+    document = relationship("Document", back_populates="claim")
     queries = relationship("Query", back_populates="claim")
-    employee = relationship("Employee", primaryjoin="Claim.user_id == Employee.user_id",
-        foreign_keys=[user_id], back_populates="claims", viewonly=True, overlaps="claims,employee")
+    employee = relationship("EmployeeDetails", primaryjoin="Claim.user_id == EmployeeDetails.user_id",
+        foreign_keys=[user_id], back_populates="claim", viewonly=True, overlaps="claim,employee")
