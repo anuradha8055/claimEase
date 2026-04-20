@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { PageTransition } from '../../components/layout/PageTransition';
 import { GlassCard } from '../../components/ui/GlassCard';
 import { GradientButton } from '../../components/ui/GradientButton';
@@ -15,12 +15,22 @@ import {
   ScanText,
   AlertTriangle,
   CheckCircle2,
-  BrainCircuit
+  BrainCircuit,
+  Loader
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import toast from 'react-hot-toast';
+import { getEmployeeClaims, getClaimDetails, uploadDocument } from '@/src/api/mrs';
+
+interface ClaimOption {
+  id: string;
+  claim_number: string;
+  patient_name: string;
+  hospital_name: string;
+}
 
 export const DocumentUploadPage: React.FC = () => {
+  const [claims, setClaims] = useState<ClaimOption[]>([]);
   const [claimId, setClaimId] = useState('');
   const [docType, setDocType] = useState('Hospital Bill');
   const [file, setFile] = useState<File | null>(null);
@@ -33,6 +43,8 @@ export const DocumentUploadPage: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [hospitalName, setHospitalName] = useState('');
   const [patientName, setPatientName] = useState('');
+  const [isLoadingClaims, setIsLoadingClaims] = useState(true);
+  const [claimStatus, setClaimStatus] = useState('');
 
   const docTypes = [
     { id: '1', label: 'Hospital Bill' },
@@ -42,6 +54,92 @@ export const DocumentUploadPage: React.FC = () => {
     { id: '5', label: 'Identity Documents' },
     { id: '6', label: 'Other Supporting Documents' },
   ];
+
+  // Fetch employee's claims on component mount
+  useEffect(() => {
+    const fetchClaims = async () => {
+      try {
+        setIsLoadingClaims(true);
+        console.log('Fetching employee claims...');
+        const claimsData = await getEmployeeClaims();
+        console.log('Claims fetched:', claimsData);
+        
+        if (!Array.isArray(claimsData)) {
+          console.warn('Invalid claims data format:', claimsData);
+          setClaims([]);
+          toast.error('Invalid response format from server');
+          setIsLoadingClaims(false);
+          return;
+        }
+        
+        if (claimsData.length === 0) {
+          setClaims([]);
+          setIsLoadingClaims(false);
+          console.log('No claims available');
+          return;
+        }
+        
+        // Filter only DRAFT claims for document upload
+        const draftClaims = claimsData.filter(
+          claim => claim.claim_status === 'DRAFT' || claim.claimstatus === 'DRAFT'
+        );
+        
+        console.log('Draft claims found:', draftClaims.length);
+        
+        const formattedClaims: ClaimOption[] = draftClaims.map(claim => ({
+          id: claim.claim_id,
+          claim_number: claim.claim_id?.substring(0, 8) || 'Unknown', // Show short UUID
+          patient_name: claim.patient?.patientName || 'Unknown Patient',
+          hospital_name: claim.hospital?.hospitalName || 'Unknown Hospital',
+        }));
+        
+        setClaims(formattedClaims);
+        
+        if (formattedClaims.length === 0) {
+          console.log('No DRAFT claims after filtering');
+          toast.info('No DRAFT claims available. Only draft claims can have documents uploaded.');
+        }
+        
+        setIsLoadingClaims(false);
+      } catch (error: any) {
+        console.error('Error fetching claims:', error);
+        setClaims([]);
+        setIsLoadingClaims(false);
+        const errorMsg = error?.response?.data?.detail || error?.message || 'Failed to load claims';
+        toast.error(`Failed to load claims: ${errorMsg}`);
+      }
+    };
+
+    fetchClaims();
+  }, []);
+
+  // Fetch claim details when claim is selected
+  const handleClaimSelect = async (selectedClaimId: string) => {
+    if (!selectedClaimId) {
+      setClaimId('');
+      setPatientName('');
+      setHospitalName('');
+      setClaimStatus('');
+      return;
+    }
+
+    try {
+      setClaimId(selectedClaimId);
+      const claimDetails = await getClaimDetails(selectedClaimId);
+      
+      setPatientName(claimDetails.patient?.patientName || 'N/A');
+      setHospitalName(claimDetails.hospital?.hospitalName || 'N/A');
+      setClaimStatus(claimDetails.claim_status || 'DRAFT');
+      
+      toast.success('Claim details loaded');
+    } catch (error) {
+      console.error('Error fetching claim details:', error);
+      toast.error('Failed to load claim details');
+      setClaimId('');
+      setPatientName('');
+      setHospitalName('');
+    }
+  };
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -93,21 +191,21 @@ export const DocumentUploadPage: React.FC = () => {
 
   const handleUpload = async () => {
     if (!claimId || !file) {
-      toast.error('Please provide Claim ID and select a file');
+      toast.error('Please select a claim and a file');
       return;
     }
 
     setIsUploading(true);
-    const toastId = toast.loading('Uploading and hashing document...');
+    const toastId = toast.loading('Uploading document to Supabase...');
 
     try {
-      // Mock upload and hash generation
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Upload document to backend (which saves to Supabase and database)
+      const uploadedDoc = await uploadDocument(claimId, docType, file);
+      setHash(uploadedDoc.fileHash);
       
       setIsUploading(false);
       setUploadSuccess(true);
-      setHash('e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b8557c3aed4f46e5');
-      toast.success('Document uploaded and hashed successfully', { id: toastId });
+      toast.success('Document uploaded and saved successfully!', { id: toastId });
 
       // Start AI Analysis
       setIsAnalyzing(true);
@@ -141,41 +239,72 @@ export const DocumentUploadPage: React.FC = () => {
         <div className="grid grid-cols-1 gap-8">
           <GlassCard className="p-8 space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Claim Selection Dropdown */}
               <div className="space-y-2">
-                <label className="text-xs font-bold text-text-muted uppercase tracking-widest">Claim ID</label>
+                <label className="text-xs font-bold text-text-muted uppercase tracking-widest">Select Claim *</label>
+                <div className="relative">
+                  {isLoadingClaims ? (
+                    <div className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 flex items-center gap-2 text-text-secondary">
+                      <Loader size={16} className="animate-spin" />
+                      <span>Loading your claims...</span>
+                    </div>
+                  ) : claims.length === 0 ? (
+                    <div className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-text-secondary text-sm">
+                      <div className="flex flex-col gap-1">
+                        <p>No DRAFT claims available</p>
+                        <p className="text-[11px] text-text-muted">Create a new claim to start uploading documents</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <select
+                        value={claimId}
+                        onChange={(e) => handleClaimSelect(e.target.value)}
+                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-text-primary focus:outline-none focus:border-accent-purple transition-all appearance-none"
+                      >
+                        <option value="" className="bg-secondary-bg text-text-muted">Select a claim...</option>
+                        {claims.map(claim => (
+                          <option key={claim.id} value={claim.id} className="bg-secondary-bg">
+                            ID: {claim.claim_number} | {claim.patient_name} | {claim.hospital_name}
+                          </option>
+                        ))}
+                      </select>
+                      <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" size={18} />
+                    </>
+                  )}
+                </div>
+                {claims.length > 0 && (
+                  <p className="text-[10px] text-text-muted">
+                    {claims.length} DRAFT claim{claims.length !== 1 ? 's' : ''} available
+                  </p>
+                )}
+              </div>
+
+              {/* Patient Name (Read-only, auto-populated) */}
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-text-muted uppercase tracking-widest">Patient Name</label>
                 <input
                   type="text"
-                  value={claimId}
-                  onChange={(e) => setClaimId(e.target.value)}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-text-primary focus:outline-none focus:border-accent-purple transition-all"
-                  placeholder="Enter Claim ID (e.g. 101)"
+                  value={patientName}
+                  readOnly
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-text-primary opacity-75 cursor-not-allowed"
+                  placeholder="Auto-populated from claim"
                 />
               </div>
-              {/* Patient Name */}
-  <div className="space-y-2">
-    <label className="text-xs font-bold text-text-muted uppercase tracking-widest">Hospital ID</label>
-    <input
-      type="text"
-      value={hospitalName}
-      onChange={(e) => setHospitalName(e.target.value)}
-      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-text-primary"
-      placeholder="Enter Hospital ID"
-    />
-  </div>
 
-              {/* Hospital Name */}
-  <div className="space-y-2">
-    <label className="text-xs font-bold text-text-muted uppercase tracking-widest">Hospital Name</label>
-    <input
-      type="text"
-      value={hospitalName}
-      onChange={(e) => setHospitalName(e.target.value)}
-      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-text-primary"
-      placeholder="Enter Hospital Name"
-    />
-  </div>
+              {/* Hospital Name (Read-only, auto-populated) */}
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-text-muted uppercase tracking-widest">Hospital Name</label>
+                <input
+                  type="text"
+                  value={hospitalName}
+                  readOnly
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-text-primary opacity-75 cursor-not-allowed"
+                  placeholder="Auto-populated from claim"
+                />
+              </div>
 
-
+              {/* Document Type */}
               <div className="space-y-2">
                 <label className="text-xs font-bold text-text-muted uppercase tracking-widest">Document Type</label>
                 <div className="relative">

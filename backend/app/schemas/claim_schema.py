@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel, Field, ConfigDict, computed_field
 from datetime import date, datetime
 from typing import Optional, List, Literal
 from decimal import Decimal
@@ -53,6 +53,32 @@ class ClaimScrutinyUpdate(BaseModel):
     status: ClaimStatus # SCRUTINY_APPROVED or QUERY_RAISED
 
 # --- For the READ/VIEW (Response to Frontend) ---
+class PatientDetailsResponse(BaseModel):
+    patientName: str
+    relation: str
+    birthDate: date
+    age: Optional[int] = None
+    gender: str
+    diagnosis: str
+    
+    model_config = ConfigDict(from_attributes=True)
+
+class HospitalDetailsResponse(BaseModel):
+    hospitalName: str
+    hospitalType: str
+    hospitalAddress: Optional[str] = None
+    hospitalCity: Optional[str] = None
+    hospitalState: Optional[str] = None
+    hospitalPincode: Optional[str] = None
+    hospitalContactNo: Optional[str] = None
+    doctorName: Optional[str] = None
+    doctorQualification: Optional[str] = None
+    treatmentDetails: Optional[str] = None
+    admissionDate: date
+    dischargeDate: date
+    
+    model_config = ConfigDict(from_attributes=True)
+
 class ClaimRead(ClaimBase):
     claim_id: int
     eligible_amount: Optional[Decimal] = None
@@ -67,11 +93,56 @@ class ClaimRead(ClaimBase):
 class ClaimResponse(ClaimBase):
     claim_id: UUID
     user_id: UUID
+    claim_status: ClaimStatus
     current_stage: int
     assigned_to_role_id: Optional[int] = None
     approvedAmount: Optional[Decimal] = None
     created_at: datetime
     updated_at: datetime
+    patient: Optional[PatientDetailsResponse] = None
+    hospital: Optional[HospitalDetailsResponse] = None
+    
+    @computed_field  # type: ignore[misc]
+    @property
+    def claim_number(self) -> str:
+        """Generate claim number from first 8 characters of UUID"""
+        return str(self.claim_id)[:8].upper()
+    
+    @computed_field  # type: ignore[misc]
+    @property
+    def diagnosis(self) -> Optional[str]:
+        """Extract diagnosis from patient details"""
+        return self.patient.diagnosis if self.patient else None
+    
+    @computed_field  # type: ignore[misc]
+    @property
+    def admission_date(self) -> Optional[date]:
+        """Extract admission date from hospital details"""
+        return self.hospital.admissionDate if self.hospital else None
+    
+    @computed_field  # type: ignore[misc]
+    @property
+    def discharge_date(self) -> Optional[date]:
+        """Extract discharge date from hospital details"""
+        return self.hospital.dischargeDate if self.hospital else None
+    
+    @computed_field  # type: ignore[misc]
+    @property
+    def total_bill_amount(self) -> Decimal:
+        """Alias for totalBillAmount"""
+        return self.totalBillAmount
+    
+    @computed_field  # type: ignore[misc]
+    @property
+    def eligible_reimbursement_amount(self) -> Optional[Decimal]:
+        """Alias for approvedAmount"""
+        return self.approvedAmount
+    
+    @computed_field  # type: ignore[misc]
+    @property
+    def last_updated_timestamp(self) -> datetime:
+        """Alias for updated_at"""
+        return self.updated_at
     
     model_config = ConfigDict(from_attributes=True)
 

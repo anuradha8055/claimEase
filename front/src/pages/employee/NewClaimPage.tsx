@@ -1,5 +1,5 @@
-import React, { useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useMemo, useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { PageTransition } from '../../components/layout/PageTransition';
 import { GlassCard } from '../../components/ui/GlassCard';
 import { GradientButton } from '../../components/ui/GradientButton';
@@ -18,13 +18,16 @@ import {
 import { format, differenceInDays } from 'date-fns';
 import toast from 'react-hot-toast';
 import { address } from 'motion/react-client';
-import { createClaim,submitClaimWorkflow } from '@/src/api/mrs';
+import { createClaim, submitClaimWorkflow, getClaimDetails, updateClaim } from '@/src/api/mrs';
 
 const RELATIONS = ['Father', 'Mother', 'Husband', 'Wife', 'Son', 'Daughter', 'Brother', 'Sister', 'Self'];
 
 export const NewClaimPage: React.FC = () => {
   const navigate = useNavigate();
+  const { claimId } = useParams<{ claimId?: string }>();
   const [step, setStep] = useState(1);
+  const [isEditing, setIsEditing] = useState(!!claimId);
+  const [loading, setLoading] = useState(!!claimId);
   const [formData, setFormData] = useState({
     // Patient details
     patient_name: '',
@@ -54,6 +57,47 @@ export const NewClaimPage: React.FC = () => {
     //financial details
     total_bill_amount: '',
   });
+
+  // Load claim data if editing
+  useEffect(() => {
+    const loadClaimData = async () => {
+      if (!claimId) {
+        setLoading(false);
+        return;
+      }
+      try {
+        const claimData = await getClaimDetails(claimId);
+        setFormData({
+          patient_name: claimData.patient?.patientName || '',
+          relation: claimData.patient?.relation || '',
+          patient_dob: claimData.patient?.birthDate ? new Date(claimData.patient.birthDate).toISOString().split('T')[0] : '',
+          patient_gender: claimData.patient?.gender || '',
+          diagnosis: claimData.patient?.diagnosis || '',
+          hospital_id: '', // hospital_id is not returned in response, user must re-enter or we fetch from hospital_details
+          hospital_name: claimData.hospital?.hospitalName || '',
+          hospital_address: claimData.hospital?.hospitalAddress || '',
+          hospital_type: claimData.hospital?.hospitalType || 'Private',
+          hospital_city: claimData.hospital?.hospitalCity || '',
+          hospital_state: claimData.hospital?.hospitalState || '',
+          hospital_pincode: claimData.hospital?.hospitalPincode || '',
+          hospital_contact_number: claimData.hospital?.hospitalContactNo || '',
+          doctor_name: claimData.hospital?.doctorName || '',
+          doctor_qualification: claimData.hospital?.doctorQualification || '',
+          treatment_details: claimData.hospital?.treatmentDetails || '',
+          admission_date: claimData.hospital?.admissionDate ? new Date(claimData.hospital.admissionDate).toISOString().split('T')[0] : '',
+          discharge_date: claimData.hospital?.dischargeDate ? new Date(claimData.hospital.dischargeDate).toISOString().split('T')[0] : '',
+          is_emergency: claimData.isEmergency || false,
+          total_bill_amount: claimData.totalBillAmount ? claimData.totalBillAmount.toString() : '',
+        });
+        setLoading(false);
+      } catch (error) {
+        toast.error('Failed to load claim details');
+        console.error('Error loading claim:', error);
+        setLoading(false);
+      }
+    };
+    loadClaimData();
+  }, [claimId]);
 
   // Helper: Live Age Calculation
   const patientAge = useMemo(() => {
@@ -128,8 +172,15 @@ export const NewClaimPage: React.FC = () => {
         isEmergency: !!formData.is_emergency
       };  
 
-      // await api call to submit claim
-      const claim = await createClaim(claim_payload);
+      let claim;
+      if (isEditing && claimId) {
+        // Update existing claim
+        claim = await updateClaim(claimId, claim_payload);
+      } else {
+        // Create new claim
+        claim = await createClaim(claim_payload);
+      }
+      
       toast.dismiss(toastId);
 
       // Attempt to trigger workflow transition if submitted
@@ -173,8 +224,20 @@ export const NewClaimPage: React.FC = () => {
           >
             <ArrowLeft size={20} />
           </button>
-          <h1 className="text-2xl font-bold text-white">New Reimbursement Claim</h1>
+          <h1 className="text-2xl font-bold text-white">
+            {isEditing ? 'Edit Reimbursement Claim' : 'New Reimbursement Claim'}
+          </h1>
         </header>
+
+        {loading && (
+          <div className="flex items-center justify-center py-12">
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
+              className="w-8 h-8 border-2 border-accent-purple border-t-transparent rounded-full"
+            />
+          </div>
+        )}
 
         {/* Step Indicator */}
         <div className="relative flex justify-between items-center px-4">
@@ -498,6 +561,15 @@ export const NewClaimPage: React.FC = () => {
                     </div>
                   </div>
                 </div>
+
+                <div className="bg-accent-purple/10 border border-accent-purple/30 rounded-xl p-4 flex gap-3">
+                  <Info size={20} className="text-accent-purple flex-shrink-0 mt-0.5" />
+                  <div className="flex flex-col gap-1">
+                    <p className="text-sm font-semibold text-accent-purple">Important: Documents Required</p>
+                    <p className="text-xs text-text-secondary">You must upload at least one supporting document (Hospital Bill, Discharge Summary, etc.) before you can submit this claim. After saving as draft, go to the Document Upload section to upload your documents.</p>
+                  </div>
+                </div>
+
                 <div className="flex flex-col gap-3">
                   <div className='flex gap-4'>
                     <GradientButton onClick={prevStep} variant="outline" className="flex-1"><ChevronLeft size={18} /> Back</GradientButton>

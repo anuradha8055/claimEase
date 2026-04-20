@@ -2,6 +2,7 @@ from pydantic import BaseModel, EmailStr, ConfigDict, field_serializer
 from typing import Optional
 from datetime import datetime
 from uuid import UUID
+
 class UserBase(BaseModel):
     emailAddress: EmailStr
     fullName: str

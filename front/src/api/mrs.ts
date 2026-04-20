@@ -27,6 +27,16 @@ export const getEmployeeClaims = async () => {
     return data;
 };
 
+export const getClaimDetails = async (claimId: string) => {
+    const { data } = await api.get<ClaimResponse>(`/claims/${claimId}`);
+    return data;
+};
+
+export const updateClaim = async (claimId: string, claimData: any) => {
+    const { data } = await api.put<ClaimResponse>(`/claims/${claimId}`, claimData);
+    return data;
+};
+
 
 export async function login(email: string, password: string) {
     const { data } = await api.post<{ accessToken: string }>('/auth/login', { 
@@ -81,14 +91,18 @@ export const checkHospitalEligibility = async (hospitalId: string): Promise<Hosp
 // in mrs.ts
 
 
-export const uploadDocument = async (claimId: number, documentData: FormData): Promise<DocumentResponse> => {
+export const uploadDocument = async (claimId: string, documentType: string, file: File): Promise<DocumentResponse> => {
     try {
-        const response = await api.post(`/claims/${claimId}/documents`, documentData, {
+        const formData = new FormData();
+        formData.append('claim_id', claimId);
+        formData.append('documentType', documentType);
+        formData.append('file', file);
+
+        const response = await api.post(`/documents/upload`, formData, {
             headers: {
                 'Content-Type': 'multipart/form-data',
             },
         });
-        toast.success('Document uploaded successfully!');
         return response.data;
     }
     catch (error) {

@@ -14,7 +14,8 @@ import {
   AlertCircle, 
   ChevronRight,
   Calendar,
-  AlertTriangle
+  AlertTriangle,
+  Edit
 } from 'lucide-react';
 import { format, differenceInDays } from 'date-fns';
 import { data, Link } from 'react-router-dom';
@@ -195,12 +196,23 @@ export const EmployeeDashboard: React.FC = () => {
                       <SLABadge updatedAt={claim.last_updated_timestamp} />
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <Link 
-                        to={`/employee/claims/${claim.claim_id}`}
-                        className="inline-flex items-center gap-1 text-xs font-bold text-accent-purple hover:text-accent-violet transition-colors"
-                      >
-                        View <ChevronRight size={14} />
-                      </Link>
+                      <div className="flex items-center justify-end gap-3">
+                        {claim.claim_status === 'DRAFT' ? (
+                          <Link 
+                            to={`/employee/edit-claim/${claim.claim_id}`}
+                            className="inline-flex items-center gap-1 text-xs font-bold text-accent-blue hover:text-accent-purple transition-colors"
+                          >
+                            Edit <Edit size={14} />
+                          </Link>
+                        ) : (
+                          <Link 
+                            to={`/employee/claims/${claim.claim_id}`}
+                            className="inline-flex items-center gap-1 text-xs font-bold text-accent-purple hover:text-accent-violet transition-colors"
+                          >
+                            View <ChevronRight size={14} />
+                          </Link>
+                        )}
+                      </div>
                     </td>
                   </motion.tr>
                 ))}

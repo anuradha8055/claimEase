@@ -50,6 +50,7 @@ export default function App() {
             <Route element={<ProtectedRoute allowedRoles={['EMPLOYEE']} />}>
               <Route path="/employee/dashboard" element={<EmployeeDashboard />} />
               <Route path="/employee/new-claim" element={<NewClaimPage />} />
+              <Route path="/employee/edit-claim/:claimId" element={<NewClaimPage />} />
               <Route path="/employee/claims/:id" element={<ClaimDetailPage />} />
               <Route path="/employee/documents" element={<DocumentUploadPage />} />
               <Route path="/employee/queries" element={<QueriesPage />} />

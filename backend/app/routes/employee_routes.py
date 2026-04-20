@@ -22,6 +22,17 @@ def create_claim(
     return claim_service.create_claim(db, payload, current_user.user_id)
 
 
+@router.put("/{claim_id}", response_model=ClaimResponse, status_code=status.HTTP_200_OK)
+def update_claim(
+    claim_id: UUID,
+    payload: ClaimCreate,
+    db:           Session = Depends(get_db),
+    current_user: User    = Depends(get_current_employee),
+):
+    """Employee updates an existing DRAFT claim."""
+    return claim_service.update_claim(db, claim_id, payload, current_user.user_id)
+
+
 # ========== GET routes with literal paths (MUST come before parameterized routes) ==========
 @router.get("/my", response_model=list[ClaimResponse])
 def my_claims(
@@ -62,8 +73,8 @@ def claim_status(
     claim = claim_service.get_claim(db, claim_id)
     return ClaimStatusResponse(
         claim_id      = claim.claim_id,
-        claim_status  = claim.claim_status,
         current_stage = claim.current_stage,
+        claim_status  = claim.claimstatus,
     )
 
 

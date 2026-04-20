@@ -41,6 +41,7 @@ class Claim(Base):
     totalBillAmount = Column("totalbillamount", Numeric(12, 2), nullable=False)
     approvedAmount = Column("approvedamount", Numeric(12, 2))
     isEmergency = Column("isemergency", Boolean, default=False)
+    claim_status = Column("claimstatus", SAEnum(ClaimStatus), default=ClaimStatus.DRAFT, nullable=False)
     current_stage = Column(Integer, default=1)
     assigned_to_role_id = Column(Integer, ForeignKey("roles.role_id"))
     

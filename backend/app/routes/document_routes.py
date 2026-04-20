@@ -6,9 +6,9 @@ from app.core.dependencies import get_current_employee, get_current_user
 from app.models.user_model import User
 from app.models.document_model import Document
 from app.schemas.document_schema import DocumentResponse, DocumentVerifyResponse
-from app.services.hashing_service import hash_file, save_file_locally, read_file
+from app.services.hashing_service import hash_file, save_file_to_supabase, read_file_from_supabase
 
-router = APIRouter(prefix="/documents", tags=["Documents"])
+router = APIRouter(tags=["Documents"])
 
 
 @router.post("/upload", response_model=DocumentResponse, status_code=201)
@@ -21,7 +21,7 @@ async def upload_document(
 ):
     """
     Upload a document for a claim.
-    Computes SHA-256 hash server-side. Stores file path (not raw bytes).
+    Computes SHA-256 hash server-side. Stores file to Supabase S3 storage.
     This hash is the tamper-evidence fingerprint.
     """
     # Validate file type
@@ -37,7 +37,14 @@ async def upload_document(
 
     # Core security step: compute hash BEFORE saving
     file_hash = hash_file(file_bytes)
-    file_path = save_file_locally(file_bytes, str(claim_id), file.filename)
+    
+    try:
+        # Save to Supabase S3 storage
+        file_path = save_file_to_supabase(file_bytes, str(claim_id), file.filename)
+        print(f"File saved to Supabase: {file_path}")
+    except Exception as e:
+        print(f"Supabase upload failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to save document: {str(e)}")
 
     doc = Document(
         claim_id         = claim_id,
@@ -46,12 +53,19 @@ async def upload_document(
         fileHash        = file_hash,
         filePath        = file_path,
         is_tampered      = False,
-        uploadedTime     = None
+        uploadTime     = None
     )
-    db.add(doc)
-    db.commit()
-    db.refresh(doc)
-    return doc
+    
+    try:
+        db.add(doc)
+        db.commit()
+        db.refresh(doc)
+        print(f"Document saved to database: {doc.document_id}")
+        return doc
+    except Exception as e:
+        db.rollback()
+        print(f"Database save failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to save document metadata: {str(e)}")
 
 
 @router.get("/claim/{claim_id}", response_model=list[DocumentResponse])
@@ -81,9 +95,9 @@ def verify_document(
     if not doc:
         raise HTTPException(status_code=404, detail="Document not found")
 
-    file_bytes = read_file(doc.filePath)
+    file_bytes = read_file_from_supabase(doc.filePath)
     if file_bytes is None:
-        raise HTTPException(status_code=404, detail="Physical file not found on server")
+        raise HTTPException(status_code=404, detail="Physical file not found in storage")
 
     recomputed   = hash_file(file_bytes)
     hash_matched = recomputed == doc.fileHash
