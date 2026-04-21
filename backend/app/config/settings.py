@@ -13,6 +13,7 @@ REFRESH_TOKEN_EXPIRE_DAYS: int    = 7
 
 # Supabase Configuration for S3 Storage
 SUPABASE_URL = os.getenv("SUPABASE_URL", "https://dexmfhbbttjdvkqlhoos.supabase.co")
+SUPABASE_KEY = os.getenv("SUPABASE_KEY", "")
 SUPABASE_ACCESS_KEY = os.getenv("SUPABASE_ACCESS_KEY", "")
 SUPABASE_SECRET_KEY = os.getenv("SUPABASE_SECRET_KEY", "")
 SUPABASE_BUCKET_NAME = os.getenv("SUPABASE_BUCKET_NAME", "claimEase")

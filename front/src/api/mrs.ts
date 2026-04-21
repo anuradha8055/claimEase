@@ -111,6 +111,26 @@ export const uploadDocument = async (claimId: string, documentType: string, file
     }
 };
 
+export const getClaimDocuments = async (claimId: string): Promise<DocumentResponse[]> => {
+    try {
+        const { data } = await api.get<DocumentResponse[]>(`/documents/claim/${claimId}`);
+        return data;
+    } catch (error) {
+        console.error('Error fetching documents:', error);
+        throw error;
+    }
+};
+
+export const getDocumentViewUrl = async (documentId: string): Promise<{ url: string; expires_in: number; file_name: string }> => {
+    try {
+        const { data } = await api.get(`/documents/view/${documentId}`);
+        return data;
+    } catch (error) {
+        console.error('Error generating document view URL:', error);
+        throw error;
+    }
+};
+
 export const raiseQuery = async (claimId: number, queryData: Partial<Query>): Promise<QueryResponse> => {
     try {
         const response = await api.post(`/claims/${claimId}/queries`, queryData);

@@ -10,6 +10,7 @@ import { ProtectedRoute } from './components/layout/ProtectedRoute';
 import { LoginPage } from './pages/LoginPage';
 import { EmployeeDashboard } from './pages/employee/EmployeeDashboard';
 import { NewClaimPage } from './pages/employee/NewClaimPage';
+import { EditClaimPage } from './pages/employee/EditClaimPage';
 import { ClaimDetailPage } from './pages/employee/ClaimDetailPage';
 import { DocumentUploadPage } from './pages/employee/DocumentUploadPage';
 import { QueriesPage } from './pages/employee/QueriesPage';
@@ -49,9 +50,11 @@ export default function App() {
             {/* Employee Routes */}
             <Route element={<ProtectedRoute allowedRoles={['EMPLOYEE']} />}>
               <Route path="/employee/dashboard" element={<EmployeeDashboard />} />
+              <Route path="/employee" element={<EmployeeDashboard />} />
               <Route path="/employee/new-claim" element={<NewClaimPage />} />
-              <Route path="/employee/edit-claim/:claimId" element={<NewClaimPage />} />
+              <Route path="/employee/edit-claim/:id" element={<EditClaimPage />} />
               <Route path="/employee/claims/:id" element={<ClaimDetailPage />} />
+              <Route path="/employee/document-upload" element={<DocumentUploadPage />} />
               <Route path="/employee/documents" element={<DocumentUploadPage />} />
               <Route path="/employee/queries" element={<QueriesPage />} />
               <Route path="/employee/profile" element={<ProfilePage />} />
