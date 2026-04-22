@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session, joinedload
 from fastapi import HTTPException, status
 from datetime import datetime
+from uuid import UUID
 from app.models.claim_model import Claim, ClaimStatus, CLAIM_TRANSITIONS
 from app.models.notifications_model import Notification
 import traceback
@@ -11,8 +12,8 @@ class WorkflowService:
     @staticmethod
     def move_claim(
         db: Session, 
-        claim_id: int, 
-        current_user_id: int, 
+        claim_id: UUID, 
+        current_user_id: UUID, 
         user_role_id: int, 
         to_status: ClaimStatus, 
         remarks: str = None
@@ -52,15 +53,12 @@ class WorkflowService:
 
             # 4. Record the Audit Log
             workflow_log = WorkflowLog(
-                log_id=None,
                 claim_id=claim.claim_id,
                 stage_id=claim.current_stage,
-                officer_id=current_user_id,
-                action_by=to_status.value,  # Action is the new status
+                action_by=current_user_id,
                 remarks=remarks,
                 sla_days=None,  # SLA calculation can be added based on timestamps
                 created_at=datetime.utcnow()
-    
             )
             db.add(workflow_log)
 
@@ -107,7 +105,7 @@ class WorkflowService:
             raise HTTPException(status_code=500, detail=f"Claim transition failed: {str(e)}")
 
 
-def transition(db: Session, claim_id: int, to_status: ClaimStatus, current_user, remarks: str = None):
+def transition(db: Session, claim_id: UUID, to_status: ClaimStatus, current_user, remarks: str = None):
     """
     Convenience function for claim transitions. Extracts user_id and role_id from current_user.
     
