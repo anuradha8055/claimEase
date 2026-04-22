@@ -142,7 +142,7 @@ async def upload_document(
         db.commit()
         db.refresh(doc)
         
-        print(f"[Document Upload] ✓ Document saved to database: {doc.document_id}")
+        print(f"[Document Upload] [OK] Document saved to database: {doc.document_id}")
         return doc
     
     except Exception as e:
@@ -195,7 +195,7 @@ def get_document_view_url(
             detail="Failed to generate view URL. File may not exist in storage.",
         )
     
-    print(f"[View Document] ✓ View URL generated successfully")
+    print(f"[View Document] [OK] View URL generated successfully")
     
     return {
         "url": signed_url,
@@ -274,7 +274,7 @@ def verify_document(
         doc.is_tampered = not hash_matched
         db.commit()
         
-        status = "✓ Intact" if hash_matched else "✗ TAMPERED"
+        status = "[OK] Intact" if hash_matched else "[FAIL] TAMPERED"
         print(f"[Document Verify] Verification complete [{status}]")
         
         return DocumentVerifyResponse(
@@ -284,7 +284,7 @@ def verify_document(
             message=(
                 "Hash verified — document is intact"
                 if hash_matched
-                else "⚠️ TAMPER DETECTED — hash mismatch. File may have been modified after upload."
+                else "WARNING: TAMPER DETECTED -- hash mismatch. File may have been modified after upload."
             ),
         )
     

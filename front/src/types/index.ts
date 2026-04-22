@@ -79,15 +79,15 @@ export interface Claim {
 }
 
 export interface Document {
-  document_id: number;
-  claim_id: number;
-  document_type: string;
-  file_name: string;
-  file_type: string;
-  file_size: number;
-  file_hash: string;
-  uploaded_by: number;
-  upload_timestamp: string;
+  document_id: string;
+  claim_id: string;
+  documentType: string;
+  fileName: string;
+  fileSize: number;
+  fileHash: string;
+  filePath: string;
+  is_tampered: boolean;
+  uploadTime: string;
   // AI Analysis results (not in DB but useful for UI)
   ai_analysis?: {
     extracted_amount?: number;

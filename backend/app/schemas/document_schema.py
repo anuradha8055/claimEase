@@ -7,6 +7,7 @@ class DocumentResponse(BaseModel):
     document_id: UUID
     claim_id: UUID
     documentType: str
+    fileName: str
     fileSize: int
     fileHash: str
     filePath: str
@@ -17,7 +18,7 @@ class DocumentResponse(BaseModel):
 
 
 class DocumentVerifyResponse(BaseModel):
-    document_id:  int
+    document_id:  UUID
     hash_matched: bool
     is_tampered:  bool
     message:      str

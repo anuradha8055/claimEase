@@ -8,14 +8,11 @@ from datetime import datetime
 import boto3
 from botocore.config import Config
 from botocore.exceptions import ClientError
-from supabase import create_client
 from app.config.settings import (
     SUPABASE_ACCESS_KEY,
     SUPABASE_SECRET_KEY,
     SUPABASE_STORAGE_ENDPOINT,
     SUPABASE_BUCKET_NAME,
-    SUPABASE_URL,
-    SUPABASE_KEY,
 )
 
 
@@ -122,17 +119,17 @@ class S3StorageService:
                 },
             )
             
-            print(f"[S3 Upload] ✓ File uploaded successfully: {s3_key}")
+            print(f"[S3 Upload] [OK] File uploaded successfully: {s3_key}")
             return s3_key
         
         except ClientError as e:
             error_code = e.response.get('Error', {}).get('Code', 'Unknown')
             error_msg = e.response.get('Error', {}).get('Message', str(e))
-            print(f"[S3 Upload] ✗ AWS ClientError [{error_code}]: {error_msg}")
+            print(f"[S3 Upload] [FAIL] AWS ClientError [{error_code}]: {error_msg}")
             raise
         
         except Exception as e:
-            print(f"[S3 Upload] ✗ Unexpected error: {str(e)}")
+            print(f"[S3 Upload] [FAIL] Unexpected error: {str(e)}")
             raise
     
     def download_file(self, s3_key: str) -> bytes | None:
@@ -158,17 +155,17 @@ class S3StorageService:
             )
             
             file_content = response['Body'].read()
-            print(f"[S3 Download] ✓ Successfully read {len(file_content)} bytes")
+            print(f"[S3 Download] [OK] Successfully read {len(file_content)} bytes")
             return file_content
         
         except ClientError as e:
             error_code = e.response.get('Error', {}).get('Code', 'Unknown')
             error_msg = e.response.get('Error', {}).get('Message', str(e))
-            print(f"[S3 Download] ✗ AWS ClientError [{error_code}]: {error_msg}")
+            print(f"[S3 Download] [FAIL] AWS ClientError [{error_code}]: {error_msg}")
             return None
         
         except Exception as e:
-            print(f"[S3 Download] ✗ Unexpected error: {str(e)}")
+            print(f"[S3 Download] [FAIL] Unexpected error: {str(e)}")
             return None
     
     def delete_file(self, s3_key: str) -> bool:
@@ -193,17 +190,17 @@ class S3StorageService:
                 Key=s3_key,
             )
             
-            print(f"[S3 Delete] ✓ File deleted successfully")
+            print(f"[S3 Delete] [OK] File deleted successfully")
             return True
         
         except ClientError as e:
             error_code = e.response.get('Error', {}).get('Code', 'Unknown')
             error_msg = e.response.get('Error', {}).get('Message', str(e))
-            print(f"[S3 Delete] ✗ AWS ClientError [{error_code}]: {error_msg}")
+            print(f"[S3 Delete] [FAIL] AWS ClientError [{error_code}]: {error_msg}")
             return False
         
         except Exception as e:
-            print(f"[S3 Delete] ✗ Unexpected error: {str(e)}")
+            print(f"[S3 Delete] [FAIL] Unexpected error: {str(e)}")
             return False
 
 
@@ -219,71 +216,54 @@ def get_storage_service() -> S3StorageService:
     return _storage_service
 
 
-# Supabase client for signed URL generation
-_supabase_client = None
-
-
-def _get_supabase_client():
-    """Initialize and return Supabase client for signed URL operations"""
-    global _supabase_client
-    if _supabase_client is None:
-        if not SUPABASE_URL or not SUPABASE_KEY:
-            raise ValueError("SUPABASE_URL and SUPABASE_KEY must be configured in .env")
-        _supabase_client = create_client(SUPABASE_URL, SUPABASE_KEY)
-    return _supabase_client
-
-
 def generate_view_url(file_path: str, expires_in: int = 3600) -> str | None:
     """
-    Generate a temporary signed URL for viewing a document in Supabase storage.
+    Generate a temporary presigned URL for viewing a document in Supabase S3 storage.
+    
+    Uses boto3's S3 presigned URL mechanism (which uses the working S3 access/secret keys)
+    instead of the Supabase REST client (whose anon key may be expired or rotated).
     
     Args:
         file_path: Relative path to the file (e.g., 'claim-uuid/filename.pdf')
         expires_in: URL expiration time in seconds (default 3600 = 1 hour)
     
     Returns:
-        Signed URL string, or None if generation fails
-    
-    Raises:
-        ValueError: If file_path is empty or configuration is missing
+        Presigned URL string, or None if generation fails
     """
     if not file_path or not file_path.strip():
         print("[Signed URL] Empty file path provided")
         return None
     
     try:
-        supabase = _get_supabase_client()
+        storage = get_storage_service()
         
-        print(f"[Signed URL] Generating signed URL for: {file_path}")
-        print(f"[Signed URL] Expiration: {expires_in} seconds")
+        print(f"[Signed URL] Generating S3 presigned URL for: {file_path}")
+        print(f"[Signed URL] Bucket: {storage.bucket}, Expiration: {expires_in}s")
         
-        # Create signed URL using Supabase storage API
-        response = supabase.storage.from_(SUPABASE_BUCKET_NAME).create_signed_url(
-            path=file_path,
-            expires_in=expires_in,
+        # Generate presigned URL using boto3 S3 client
+        signed_url = storage.s3_client.generate_presigned_url(
+            'get_object',
+            Params={
+                'Bucket': storage.bucket,
+                'Key': file_path,
+            },
+            ExpiresIn=expires_in,
         )
         
-        # response is typically {"signedURL": "https://..."}
-        signed_url = response.get("signedURL") if isinstance(response, dict) else str(response)
-        
         if not signed_url:
-            print("[Signed URL] ✗ No URL returned from Supabase")
+            print("[Signed URL] [FAIL] No URL returned from S3")
             return None
         
-        print(f"[Signed URL] ✓ Signed URL generated successfully")
+        print(f"[Signed URL] [OK] Presigned URL generated successfully")
         return signed_url
     
-    except ValueError as e:
-        print(f"[Signed URL] ✗ Configuration error: {str(e)}")
+    except ClientError as e:
+        error_code = e.response.get('Error', {}).get('Code', 'Unknown')
+        error_msg = e.response.get('Error', {}).get('Message', str(e))
+        print(f"[Signed URL] [FAIL] S3 ClientError [{error_code}]: {error_msg}")
         return None
     
     except Exception as e:
-        error_msg = str(e)
-        print(f"[Signed URL] ✗ Failed to generate signed URL: {error_msg}")
-        
-        # Check for common Supabase errors
-        if "not found" in error_msg.lower() or "404" in error_msg:
-            print(f"[Signed URL] → File does not exist in storage: {file_path}")
-        
+        print(f"[Signed URL] [FAIL] Failed to generate presigned URL: {str(e)}")
         return None
 

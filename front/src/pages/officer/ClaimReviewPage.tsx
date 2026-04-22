@@ -81,15 +81,15 @@ export const ClaimReviewPage: React.FC = () => {
 
       const mockDocs: Document[] = [
         {
-          document_id: 1,
-          claim_id: Number(id),
-          document_type: 'HOSPITAL_BILL',
-          file_name: 'hospital_bill_045.pdf',
-          file_type: 'application/pdf',
-          file_hash: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
-          file_size: 1024 * 1024 * 2.5,
-          uploaded_by: 101,
-          upload_timestamp: '2026-03-06T10:10:00Z',
+          document_id: '1',
+          claim_id: String(id),
+          documentType: 'HOSPITAL_BILL',
+          fileName: 'HOSPITAL_BILL-001.pdf',
+          fileHash: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
+          fileSize: 1024 * 1024 * 2.5,
+          filePath: 'claims/' + id + '/hospital_bill_045.pdf',
+          is_tampered: false,
+          uploadTime: '2026-03-06T10:10:00Z',
           ai_analysis: {
             extracted_amount: 185000,
             extracted_date: '2026-03-05',
@@ -269,12 +269,12 @@ export const ClaimReviewPage: React.FC = () => {
                         <File size={24} />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-bold text-white truncate">{doc.file_name}</p>
+                        <p className="text-sm font-bold text-white truncate">{doc.fileName}</p>
                         <div className="flex items-center gap-2 mt-1">
                           <span className="text-[10px] font-mono text-text-muted bg-white/5 px-1.5 py-0.5 rounded">
-                            {doc.file_hash.substring(0, 20)}...
+                            {doc.fileHash.substring(0, 20)}...
                           </span>
-                          {doc.is_verified && (
+                          {!doc.is_tampered && (
                             <span className="px-2 py-0.5 rounded-full bg-accent-green/10 text-accent-green text-[8px] font-bold border border-accent-green/20">VERIFIED</span>
                           )}
                         </div>

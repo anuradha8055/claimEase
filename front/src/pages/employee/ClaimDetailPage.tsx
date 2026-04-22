@@ -28,6 +28,7 @@ export const ClaimDetailPage: React.FC = () => {
   const [documents, setDocuments] = useState<Document[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingDocs, setLoadingDocs] = useState(false);
+  const [viewingDocId, setViewingDocId] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchClaimAndDocuments = async () => {
@@ -62,11 +63,25 @@ export const ClaimDetailPage: React.FC = () => {
 
   const handleViewDocument = async (documentId: string, fileName: string) => {
     try {
+      setViewingDocId(documentId);
+      toast.loading('Opening document...');
       const response = await mrs.getDocumentViewUrl(documentId);
+      
+      if (!response.url) {
+        toast.dismiss();
+        toast.error('Failed to generate document link');
+        return;
+      }
+      
+      toast.dismiss();
+      toast.success('Opening document...');
       window.open(response.url, '_blank');
     } catch (error) {
-      console.error('Error generating view URL:', error);
-      toast.error('Failed to generate view link for document');
+      toast.dismiss();
+      console.error('Error viewing document:', error);
+      toast.error('Failed to open document. Please try again.');
+    } finally {
+      setViewingDocId(null);
     }
   };
 
@@ -236,24 +251,36 @@ export const ClaimDetailPage: React.FC = () => {
                       <FileCheck size={20} />
                     </div>
                     <div>
-                      <p className="font-semibold text-white">{doc.document_type || 'Document'}</p>
+                      <p className="font-semibold text-white">{doc.documentType || 'Document'}</p>
                       <p className="text-xs text-text-muted">
-                        {doc.file_name || 'Uploaded document'} 
-                        {doc.file_size && ` • ${(doc.file_size / 1024).toFixed(2)} KB`}
+                        {doc.fileName || 'Uploaded document'} 
+                        {doc.fileSize && ` • ${(doc.fileSize / 1024).toFixed(2)} KB`}
                       </p>
-                      {doc.upload_timestamp && (
+                      {doc.uploadTime && (
                         <p className="text-[10px] text-text-muted/70 mt-1">
-                          Uploaded on {format(new Date(doc.upload_timestamp), 'MMM dd, yyyy HH:mm')}
+                          Uploaded on {format(new Date(doc.uploadTime), 'MMM dd, yyyy HH:mm')}
                         </p>
                       )}
                     </div>
                   </div>
                   <button
-                    onClick={() => handleViewDocument(String(doc.document_id), doc.file_name || 'document')}
-                    className="p-2 hover:bg-accent-blue/20 rounded-lg transition-colors text-accent-blue flex items-center gap-2 text-xs font-bold opacity-0 group-hover:opacity-100"
+                    onClick={() => handleViewDocument(String(doc.document_id), doc.fileName || 'document')}
+                    disabled={viewingDocId === String(doc.document_id)}
+                    className="px-3 py-2 hover:bg-accent-blue/20 rounded-lg transition-colors text-accent-blue flex items-center gap-2 text-xs font-bold disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <LinkIcon size={16} />
-                    View
+                    {viewingDocId === String(doc.document_id) ? (
+                      <>
+                        <motion.div 
+                          className="w-3 h-3 border-2 border-accent-blue border-t-transparent rounded-full animate-spin"
+                        />
+                        Opening...
+                      </>
+                    ) : (
+                      <>
+                        <LinkIcon size={16} />
+                        View
+                      </>
+                    )}
                   </button>
                 </motion.div>
               ))}

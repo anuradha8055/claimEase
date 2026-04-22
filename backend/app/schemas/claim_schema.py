@@ -140,6 +140,12 @@ class ClaimResponse(ClaimBase):
     
     @computed_field  # type: ignore[misc]
     @property
+    def submission_timestamp(self) -> Optional[datetime]:
+        """Alias for created_at — used by the frontend timeline"""
+        return self.created_at
+
+    @computed_field  # type: ignore[misc]
+    @property
     def last_updated_timestamp(self) -> datetime:
         """Alias for updated_at"""
         return self.updated_at
