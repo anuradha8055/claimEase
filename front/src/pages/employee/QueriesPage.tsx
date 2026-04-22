@@ -7,11 +7,14 @@ import { MessageCircle, Send, Clock, User, ArrowRight } from 'lucide-react';
 import { format } from 'date-fns';
 import { motion, AnimatePresence } from 'motion/react';
 import toast from 'react-hot-toast';
+import * as mrs from '../../api/mrs';
+
+type EmployeeQuery = QueryResponse;
 
 export const QueriesPage: React.FC = () => {
-  const [queries, setQueries] = useState<any[]>([]);
+  const [queries, setQueries] = useState<EmployeeQuery[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedQuery, setSelectedQuery] = useState<any | null>(null);
+  const [selectedQuery, setSelectedQuery] = useState<EmployeeQuery | null>(null);
   const [responseText, setResponseText] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [uploadFile, setUploadFile] = useState<File | null>(null);
@@ -21,35 +24,50 @@ export const QueriesPage: React.FC = () => {
   if (file) setUploadFile(file);
 };
   useEffect(() => {
-    // Mock data
-    const mockQueries: any[] = [
-      {
-        query_id: 1,
-        claim_id: 103,
-        claim_number: 'CLM-2026-003',
-        raised_stage: 'SCRUTINY_OFFICER',
-        query_description: 'The hospital bill is missing the official stamp and signature from the medical superintendent. Please upload a stamped copy.',
-        response_text: null,
-        query_status: 'OPEN',
-        created_timestamp: '2026-03-22T14:30:00Z',
+    const fetchQueries = async () => {
+      try {
+        setLoading(true);
+        const data = await mrs.getMyQueries();
+        setQueries(data);
+      } catch (error) {
+        console.error('Error fetching employee queries:', error);
+        toast.error('Failed to load queries');
+      } finally {
+        setLoading(false);
       }
-    ];
-    setQueries(mockQueries);
-    setLoading(false);
+    };
+
+    fetchQueries();
   }, []);
 
   const handleRespond = async () => {
     if (!responseText.trim() || !selectedQuery) return;
 
-    setSubmitting(true);
-    // Mock API call
-    setTimeout(() => {
-      setQueries(prev => prev.filter(q => q.query_id !== selectedQuery.query_id));
+    try {
+      setSubmitting(true);
+      await mrs.respondToQuery(String(selectedQuery.query_id), responseText.trim());
+      setQueries((prev) => prev.filter((q) => q.query_id !== selectedQuery.query_id));
       setSelectedQuery(null);
       setResponseText('');
-      setSubmitting(false);
       toast.success('Response submitted successfully');
-    }, 1500);
+    } catch (error) {
+      console.error('Error submitting query response:', error);
+      toast.error('Failed to submit response');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const getClaimNumber = (claimId: string) => String(claimId).slice(0, 8).toUpperCase();
+
+  const getRaisedByStage = (raisedStage: number) => {
+    const stageMap: Record<number, string> = {
+      2: 'SCRUTINY OFFICER',
+      3: 'MEDICAL OFFICER',
+      4: 'FINANCE OFFICER',
+      5: 'DDO',
+    };
+    return stageMap[raisedStage] || 'OFFICER';
   };
 
   return (
@@ -57,17 +75,26 @@ export const QueriesPage: React.FC = () => {
       <div className="max-w-4xl mx-auto space-y-8">
         <header className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-white">Pending Queries</h1>
-            <p className="text-text-secondary text-sm">Respond to queries raised by officers to proceed with your claim.</p>
+            <h1 className="text-2xl font-bold text-white">My Queries</h1>
+            <p className="text-text-secondary text-sm">View and respond to queries raised by officers for your claims.</p>
           </div>
           <div className="px-4 py-2 bg-accent-orange/10 border border-accent-orange/20 rounded-xl text-accent-orange font-bold text-sm">
-            {queries.length} Pending
+            {queries.length} Total
           </div>
         </header>
 
         <div className="grid grid-cols-1 gap-6">
           <AnimatePresence mode="popLayout">
-            {queries.length === 0 ? (
+            {loading ? (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="flex flex-col items-center justify-center py-20 text-center"
+              >
+                <div className="w-10 h-10 border-2 border-accent-purple border-t-transparent rounded-full animate-spin" />
+                <p className="text-text-secondary mt-4">Loading queries...</p>
+              </motion.div>
+            ) : queries.length === 0 ? (
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -76,8 +103,8 @@ export const QueriesPage: React.FC = () => {
                 <div className="w-20 h-20 rounded-full bg-white/5 flex items-center justify-center text-text-muted mb-4">
                   <MessageCircle size={40} />
                 </div>
-                <h3 className="text-xl font-bold text-white font-space">No Pending Queries</h3>
-                <p className="text-text-secondary">All your claims are currently in processing.</p>
+                <h3 className="text-xl font-bold text-white font-space">No Queries Found</h3>
+                <p className="text-text-secondary">No queries are available for your claims yet.</p>
               </motion.div>
             ) : (
               queries.map((query) => (
@@ -92,18 +119,18 @@ export const QueriesPage: React.FC = () => {
                     <div className="p-6 space-y-4">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                          <span className="text-xs font-mono text-accent-purple font-bold">{query.claim_number}</span>
+                          <span className="text-xs font-mono text-accent-purple font-bold">{getClaimNumber(String(query.claim_id))}</span>
                           <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/5 text-text-muted font-bold uppercase tracking-wider flex items-center gap-1">
-                            <User size={10} /> Raised by {query.raised_stage.replace('_', ' ')}
+                            <User size={10} /> Raised by {getRaisedByStage(query.raised_stage)}
                           </span>
                         </div>
                         <div className="flex items-center gap-1 text-[10px] text-text-muted font-bold">
-                          <Clock size={12} /> {format(new Date(query.created_timestamp), 'MMM dd, yyyy')}
+                          <Clock size={12} /> {format(new Date(query.created_at), 'MMM dd, yyyy')}
                         </div>
                       </div>
 
                       <div className="p-4 bg-white/5 rounded-xl border border-white/5">
-                        <p className="text-sm text-text-primary leading-relaxed">{query.query_description}</p>
+                        <p className="text-sm text-text-primary leading-relaxed">{query.query_text}</p>
                       </div>
 
                       <div className="flex justify-end gap-3">
@@ -150,13 +177,13 @@ export const QueriesPage: React.FC = () => {
                 
                   <header>
                     <h2 className="text-xl font-bold text-white font-space">Respond to Query</h2>
-                    <p className="text-sm text-text-secondary">Claim: {selectedQuery.claim_number}</p>
+                    <p className="text-sm text-text-secondary">Claim: {getClaimNumber(String(selectedQuery.claim_id))}</p>
                   </header>
 
                   <div className="space-y-2">
                     <label className="text-[10px] font-bold text-text-muted uppercase tracking-widest">Query Message</label>
                     <div className="p-4 bg-accent-orange/10 border border-accent-orange/20 rounded-xl">
-                      <p className="text-sm text-text-primary italic">"{selectedQuery.query_description}"</p>
+                      <p className="text-sm text-text-primary italic">"{selectedQuery.query_text}"</p>
                     </div>
                   </div>
 

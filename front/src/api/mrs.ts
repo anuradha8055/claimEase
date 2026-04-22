@@ -21,6 +21,38 @@ import type {
     QueryResponse
 } from '../types/index';
 
+export interface EmployeeProfileResponse {
+    user_id: string;
+    fullName: string;
+    emailAddress: string;
+    employeeId: string;
+    department?: string | null;
+    designation?: string | null;
+    contactNo?: string | null;
+    lastLogin?: string | null;
+    panNumber?: string | null;
+    bankAccount?: string | null;
+    ifscCode?: string | null;
+    gradePay?: number | null;
+    basicPay?: number | null;
+    dateOfJoining?: string | null;
+    officeLocation?: string | null;
+}
+
+export interface EmployeeProfileUpdatePayload {
+    fullName?: string;
+    contactNo?: string;
+    department?: string;
+    designation?: string;
+    panNumber?: string;
+    bankAccount?: string;
+    ifscCode?: string;
+    gradePay?: number;
+    basicPay?: number;
+    dateOfJoining?: string;
+    officeLocation?: string;
+}
+
 
 export const getEmployeeClaims = async () => {
     const { data } = await api.get<ClaimResponse[]>('/claims/my-claims');
@@ -127,6 +159,40 @@ export const getDocumentViewUrl = async (documentId: string): Promise<{ url: str
         return data;
     } catch (error) {
         console.error('Error generating document view URL:', error);
+        throw error;
+    }
+};
+
+export const getMyQueries = async (): Promise<QueryResponse[]> => {
+    try {
+        const { data } = await api.get<QueryResponse[]>('/queries/my');
+        return data;
+    } catch (error) {
+        console.error('Error fetching employee queries:', error);
+        throw error;
+    }
+};
+
+export const getEmployeeProfile = async (): Promise<EmployeeProfileResponse> => {
+    const { data } = await api.get<EmployeeProfileResponse>('/auth/employee-profile');
+    return data;
+};
+
+export const updateEmployeeProfile = async (
+    profileData: EmployeeProfileUpdatePayload
+): Promise<EmployeeProfileResponse> => {
+    const { data } = await api.put<EmployeeProfileResponse>('/auth/employee-profile', profileData);
+    return data;
+};
+
+export const respondToQuery = async (queryId: string, responseText: string): Promise<QueryResponse> => {
+    try {
+        const { data } = await api.post<QueryResponse>(`/queries/${queryId}/respond`, {
+            response_text: responseText,
+        });
+        return data;
+    } catch (error) {
+        console.error('Error responding to query:', error);
         throw error;
     }
 };

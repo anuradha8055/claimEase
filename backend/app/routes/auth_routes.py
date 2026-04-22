@@ -6,15 +6,23 @@ from app.config.database import get_db
 from app.config.settings import REFRESH_TOKEN_EXPIRE_DAYS
 from app.models.user_model import User
 from app.schemas.user_schema import UserRegister, UserLogin, UserResponse, TokenResponse
+from app.schemas.employee_schema import EmployeeProfileResponse, EmployeeProfileUpdate
 from app.utils.security import (
     hash_password, verify_password,
     create_access_token, create_refresh_token, decode_token
 )
 from app.models.roles_model import Role
-from app.core.dependencies import get_current_user
+from app.core.dependencies import get_current_user, get_current_employee
 from uuid import UUID
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
+
+def _normalize_date_of_joining(value) -> str | None:
+    if value is None:
+        return None
+    if hasattr(value, "isoformat"):
+        return value.isoformat()
+    return str(value)
 
 
 @router.post("/register", response_model=UserResponse, status_code=201)
@@ -50,12 +58,13 @@ def register(payload: UserRegister, db: Session = Depends(get_db)):
     
     # Create Employee profile if role is EMPLOYEE
     if payload.role.upper() == "EMPLOYEE":
-        from app.models.employees_model import Employee
+        from app.models.employees_model import EmployeeDetails
         try:
-            new_employee = Employee(
+            new_employee = EmployeeDetails(
                 user_id = new_user.user_id,
-                department = payload.department,
-                designation = payload.profession
+                pan_number = f"PENDING-{str(new_user.user_id)[:8]}",
+                bank_account = f"PENDING-{str(new_user.user_id)[:8]}",
+                ifsc_code = "PENDING"
             )
             db.add(new_employee)
             db.commit()
@@ -147,3 +156,99 @@ def logout(db: Session = Depends(get_db), request: Request = None):
 def get_current_user_profile(current_user: User = Depends(get_current_user)):
     """Get current authenticated user's profile from database."""
     return current_user
+
+
+@router.get("/employee-profile", response_model=EmployeeProfileResponse)
+def get_employee_profile(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_employee),
+):
+    """Get authenticated employee profile (user + employee_details)."""
+    from app.models.employees_model import EmployeeDetails
+
+    employee = db.query(EmployeeDetails).filter(EmployeeDetails.user_id == current_user.user_id).first()
+
+    return EmployeeProfileResponse(
+        user_id=current_user.user_id,
+        fullName=current_user.fullName,
+        emailAddress=current_user.emailAddress,
+        employeeId=current_user.employeeId,
+        department=current_user.department,
+        designation=current_user.designation,
+        contactNo=current_user.contactNo,
+        lastLogin=current_user.lastLogin.isoformat() if current_user.lastLogin else None,
+        panNumber=employee.pan_number if employee else None,
+        bankAccount=employee.bank_account if employee else None,
+        ifscCode=employee.ifsc_code if employee else None,
+        gradePay=employee.grade_pay if employee else None,
+        basicPay=employee.basic_pay if employee else None,
+        dateOfJoining=_normalize_date_of_joining(employee.date_of_joining) if employee else None,
+        officeLocation=employee.office_location if employee else None,
+    )
+
+
+@router.put("/employee-profile", response_model=EmployeeProfileResponse)
+def update_employee_profile(
+    payload: EmployeeProfileUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_employee),
+):
+    """Update authenticated employee profile and persist in database."""
+    from app.models.employees_model import EmployeeDetails
+
+    employee = db.query(EmployeeDetails).filter(EmployeeDetails.user_id == current_user.user_id).first()
+    if employee is None:
+        employee = EmployeeDetails(
+            user_id=current_user.user_id,
+            pan_number="PENDING",
+            bank_account="PENDING",
+            ifsc_code="PENDING",
+        )
+        db.add(employee)
+        db.flush()
+
+    if payload.fullName is not None:
+        current_user.fullName = payload.fullName.strip()
+    if payload.contactNo is not None:
+        current_user.contactNo = payload.contactNo.strip()
+    if payload.department is not None:
+        current_user.department = payload.department.strip()
+    if payload.designation is not None:
+        current_user.designation = payload.designation.strip()
+
+    if payload.panNumber is not None:
+        employee.pan_number = payload.panNumber.strip()
+    if payload.bankAccount is not None:
+        employee.bank_account = payload.bankAccount.strip()
+    if payload.ifscCode is not None:
+        employee.ifsc_code = payload.ifscCode.strip()
+    if payload.gradePay is not None:
+        employee.grade_pay = payload.gradePay
+    if payload.basicPay is not None:
+        employee.basic_pay = payload.basicPay
+    if payload.dateOfJoining is not None:
+        employee.date_of_joining = payload.dateOfJoining.strip()
+    if payload.officeLocation is not None:
+        employee.office_location = payload.officeLocation.strip()
+
+    db.commit()
+    db.refresh(current_user)
+    db.refresh(employee)
+
+    return EmployeeProfileResponse(
+        user_id=current_user.user_id,
+        fullName=current_user.fullName,
+        emailAddress=current_user.emailAddress,
+        employeeId=current_user.employeeId,
+        department=current_user.department,
+        designation=current_user.designation,
+        contactNo=current_user.contactNo,
+        lastLogin=current_user.lastLogin.isoformat() if current_user.lastLogin else None,
+        panNumber=employee.pan_number,
+        bankAccount=employee.bank_account,
+        ifscCode=employee.ifsc_code,
+        gradePay=employee.grade_pay,
+        basicPay=employee.basic_pay,
+        dateOfJoining=_normalize_date_of_joining(employee.date_of_joining),
+        officeLocation=employee.office_location,
+    )

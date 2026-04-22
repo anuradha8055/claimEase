@@ -10,7 +10,7 @@ from app.models.claim_model import Claim, ClaimStatus
 from app.schemas.query_schema import QueryRespond, QueryResponse
 from app.services.workflow_service import transition
 
-router = APIRouter(prefix="/queries", tags=["Queries"])
+router = APIRouter(tags=["Queries"])
 
 
 @router.get("/my", response_model=list[QueryResponse])
@@ -18,19 +18,15 @@ def my_pending_queries(
     db:           Session = Depends(get_db),
     current_user: User    = Depends(get_current_employee),
 ):
-    """Employee views all pending queries on their claims."""
-    from app.models.employees_model import Employee
-    employee = db.query(Employee).filter(Employee.user_id == current_user.user_id).first()
-    if not employee:
-        return []
-    # Get all pending queries for claims owned by this employee
+    """Employee views all queries on their claims."""
+    # Get all queries (pending and resolved) for claims owned by this employee
     return (
         db.query(Query)
         .join(Claim, Query.claim_id == Claim.claim_id)
         .filter(
-            Claim.user_id == current_user.user_id,
-            Query.status == "PENDING"
+            Claim.user_id == current_user.user_id
         )
+        .order_by(Query.created_at.desc())
         .all()
     )
 
