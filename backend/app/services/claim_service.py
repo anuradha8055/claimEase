@@ -1,11 +1,11 @@
 from datetime import date, datetime, timezone
+from uuid import UUID
 from sqlalchemy.orm import Session
 from fastapi import HTTPException
 from app.models.claim_model import Claim, ClaimStatus
-from app.models.employees_model import EmployeeDetails
 from app.schemas.claim_schema import ClaimCreate
 
-def create_claim(db: Session, payload: ClaimCreate, user_id: int) -> Claim:
+def create_claim(db: Session, payload: ClaimCreate, user_id: UUID) -> Claim:
     """Creates a claim in DRAFT state for the logged-in employee."""
     from app.models.user_model import User
     from app.models.patient_model import PatientDetails
@@ -63,7 +63,7 @@ def create_claim(db: Session, payload: ClaimCreate, user_id: int) -> Claim:
     return claim
 
 
-def submit_claim(db: Session, claim_id: int, user_id: int) -> Claim:
+def submit_claim(db: Session, claim_id: UUID, user_id: UUID) -> Claim:
     """Transitions claim from DRAFT to SUBMITTED and assigns an inward number.
     
     Validates that at least one document has been uploaded before submission.
@@ -76,9 +76,8 @@ def submit_claim(db: Session, claim_id: int, user_id: int) -> Claim:
     if not claim:
         raise HTTPException(status_code=404, detail="Claim not found")
 
-    # Verify ownership
-    employee = db.query(EmployeeDetails).filter(EmployeeDetails.user_id == user_id).first()
-    if not employee or claim.user_id != employee.user_id:
+    # Verify ownership - check if claim belongs to the current user
+    if claim.user_id != user_id:
         raise HTTPException(status_code=403, detail="You can only submit your own claims")
 
     # Check if at least one document has been uploaded for this claim
@@ -96,19 +95,19 @@ def submit_claim(db: Session, claim_id: int, user_id: int) -> Claim:
     return claim
 
 
-def get_claim(db: Session, claim_id: int) -> Claim:
+def get_claim(db: Session, claim_id: UUID) -> Claim:
     claim = db.query(Claim).filter(Claim.claim_id == claim_id).first()
     if not claim:
         raise HTTPException(status_code=404, detail="Claim not found")
     return claim
 
 
-def get_my_claims(db: Session, user_id: int) -> list[Claim]:
+def get_my_claims(db: Session, user_id: UUID) -> list[Claim]:
     """Get all claims created by the current user."""
     return db.query(Claim).filter(Claim.user_id == user_id).all()
 
 
-def update_claim(db: Session, claim_id, payload: ClaimCreate, user_id: int) -> Claim:
+def update_claim(db: Session, claim_id: UUID, payload: ClaimCreate, user_id: UUID) -> Claim:
     """Updates an existing DRAFT claim for the logged-in employee."""
     from app.models.user_model import User
     from app.models.patient_model import PatientDetails
