@@ -8,7 +8,11 @@ from datetime import datetime
 import boto3
 from botocore.config import Config
 from botocore.exceptions import ClientError
+from supabase import create_client
 from app.config.settings import (
+    SUPABASE_URL,
+    SUPABASE_KEY,
+    SUPABASE_SERVICE_ROLE_KEY,
     SUPABASE_ACCESS_KEY,
     SUPABASE_SECRET_KEY,
     SUPABASE_STORAGE_ENDPOINT,
@@ -44,9 +48,9 @@ class S3StorageService:
     def _create_client():
         """Create and return S3 client with Supabase compatibility settings"""
         config = Config(
+            signature_version='s3v4',
             s3={
                 'addressing_style': 'path',  # Critical for Supabase S3
-                'signature_version': 's3v4',
             },
             region_name='us-east-1',
             retries={'max_attempts': 3, 'mode': 'standard'},
@@ -218,17 +222,14 @@ def get_storage_service() -> S3StorageService:
 
 def generate_view_url(file_path: str, expires_in: int = 3600) -> str | None:
     """
-    Generate a temporary presigned URL for viewing a document in Supabase S3 storage.
-    
-    Uses boto3's S3 presigned URL mechanism (which uses the working S3 access/secret keys)
-    instead of the Supabase REST client (whose anon key may be expired or rotated).
+    Generate a temporary signed URL for viewing a private document in Supabase Storage.
     
     Args:
         file_path: Relative path to the file (e.g., 'claim-uuid/filename.pdf')
         expires_in: URL expiration time in seconds (default 3600 = 1 hour)
     
     Returns:
-        Presigned URL string, or None if generation fails
+        Signed URL string, or None if generation fails
     """
     if not file_path or not file_path.strip():
         print("[Signed URL] Empty file path provided")
@@ -236,26 +237,47 @@ def generate_view_url(file_path: str, expires_in: int = 3600) -> str | None:
     
     try:
         storage = get_storage_service()
-        
-        print(f"[Signed URL] Generating S3 presigned URL for: {file_path}")
-        print(f"[Signed URL] Bucket: {storage.bucket}, Expiration: {expires_in}s")
-        
-        # Generate presigned URL using boto3 S3 client
+
+        if not SUPABASE_URL or not SUPABASE_URL.strip():
+            print("[Signed URL] [FAIL] SUPABASE_URL not configured")
+        else:
+            supabase_api_key = (SUPABASE_SERVICE_ROLE_KEY or SUPABASE_KEY).strip()
+            if not supabase_api_key:
+                print("[Signed URL] [FAIL] Neither SUPABASE_SERVICE_ROLE_KEY nor SUPABASE_KEY is configured")
+            else:
+                try:
+                    print(f"[Signed URL] Generating Supabase signed URL for: {file_path}")
+                    print(f"[Signed URL] Bucket: {SUPABASE_BUCKET_NAME}, Expiration: {expires_in}s")
+
+                    supabase = create_client(SUPABASE_URL, supabase_api_key)
+                    response = supabase.storage.from_(SUPABASE_BUCKET_NAME).create_signed_url(file_path, expires_in)
+                    signed_url = response.get("signedURL") or response.get("signedUrl")
+
+                    if signed_url:
+                        print("[Signed URL] [OK] Supabase signed URL generated successfully")
+                        return signed_url
+
+                    print(f"[Signed URL] [FAIL] Supabase returned no signed URL. Response: {response}")
+                except Exception as e:
+                    print(f"[Signed URL] [FAIL] Supabase SDK signing failed: {str(e)}")
+
+        # Fallback: use S3-compatible presigned URL if Supabase SDK signing fails.
+        # This keeps document view functional even when REST key is invalid/rotated.
+        print("[Signed URL] Falling back to S3 presigned URL")
         signed_url = storage.s3_client.generate_presigned_url(
-            'get_object',
+            "get_object",
             Params={
-                'Bucket': storage.bucket,
-                'Key': file_path,
+                "Bucket": storage.bucket,
+                "Key": file_path,
             },
             ExpiresIn=expires_in,
         )
-        
-        if not signed_url:
-            print("[Signed URL] [FAIL] No URL returned from S3")
-            return None
-        
-        print(f"[Signed URL] [OK] Presigned URL generated successfully")
-        return signed_url
+        if signed_url:
+            print("[Signed URL] [OK] S3 presigned URL generated successfully")
+            return signed_url
+
+        print("[Signed URL] [FAIL] S3 presigned URL generation returned empty result")
+        return None
     
     except ClientError as e:
         error_code = e.response.get('Error', {}).get('Code', 'Unknown')
@@ -264,6 +286,6 @@ def generate_view_url(file_path: str, expires_in: int = 3600) -> str | None:
         return None
     
     except Exception as e:
-        print(f"[Signed URL] [FAIL] Failed to generate presigned URL: {str(e)}")
+        print(f"[Signed URL] [FAIL] Failed to generate signed URL: {str(e)}")
         return None
 
