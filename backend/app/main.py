@@ -39,10 +39,10 @@ app.add_middleware(
 app.include_router(auth_routes.router)
 app.include_router(employee_routes.router)
 app.include_router(document_router, prefix="/documents")
-app.include_router(scrutiny_router, prefix="/scrutiny")
-app.include_router(medical_router, prefix="/medical")
-app.include_router(finance_router, prefix="/finance")
-app.include_router(ddo_router, prefix="/ddo")
+app.include_router(scrutiny_router)
+app.include_router(medical_router)
+app.include_router(finance_router)
+app.include_router(ddo_router)
 app.include_router(query_router, prefix="/queries")
 
 

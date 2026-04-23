@@ -13,6 +13,7 @@ from app.schemas.claim_schema import ClaimResponse
 from app.services.workflow_service import transition
 
 router = APIRouter(prefix="/finance", tags=["Finance Officer"])
+FINANCE_ROLE_ID = 4
 
 
 class FinanceApproval(BaseModel):
@@ -27,12 +28,14 @@ def _calculate_eligible_amount(db: Session, claim: Claim) -> dict:
     """
     hospital = db.query(HospitalDetails).filter(HospitalDetails.claim_id == claim.claim_id).first()
    
-    system_calculated = claim.totalBillAmount
+    system_calculated = claim.totalBillAmount or 0
 
     return {
         "system_calculated": float(system_calculated),
         "hospital_name":         hospital.hospitalName if hospital else None,
-        "claimed_amount":    float(claim.claimed_amount),
+        # claim model stores submitted amount in totalBillAmount
+        "claimed_amount":    float(claim.totalBillAmount or 0),
+        "breakdown": [],
     }
 
 
@@ -41,13 +44,22 @@ def get_queue(
     db:           Session = Depends(get_db),
     current_user: User    = Depends(get_current_finance_officer),
 ):
-    """All claims at MEDICAL_APPROVED stage."""
-    return (
+    """Claims assigned to finance role_id=4."""
+    claims = (
         db.query(Claim)
-        .filter(Claim.current_stage == 4)
+        .filter(
+            (Claim.assigned_to_role_id == FINANCE_ROLE_ID) |
+            ((Claim.assigned_to_role_id.is_(None)) & (Claim.current_stage == 4))
+        )
         .order_by(Claim.created_at.asc())
         .all()
     )
+    missing_assignment = [c for c in claims if c.assigned_to_role_id is None]
+    if missing_assignment:
+        for claim in missing_assignment:
+            claim.assigned_to_role_id = FINANCE_ROLE_ID
+        db.commit()
+    return claims
 
 
 @router.get("/{claim_id}/calculate")

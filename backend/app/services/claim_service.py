@@ -1,6 +1,6 @@
 from datetime import date, datetime, timezone
 from uuid import UUID
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from fastapi import HTTPException
 from app.models.claim_model import Claim, ClaimStatus
 from app.schemas.claim_schema import ClaimCreate
@@ -71,6 +71,7 @@ def submit_claim(db: Session, claim_id: UUID, user_id: UUID) -> Claim:
     from app.services.workflow_service import transition
     from app.models.user_model import User
     from app.models.document_model import Document
+    from app.models.roles_model import Role
 
     claim = db.query(Claim).filter(Claim.claim_id == claim_id).first()
     if not claim:
@@ -91,12 +92,28 @@ def submit_claim(db: Session, claim_id: UUID, user_id: UUID) -> Claim:
     actor = db.query(User).filter(User.user_id == user_id).first()
     claim = transition(db, claim_id, ClaimStatus.SUBMITTED, actor, "Employee submitted claim")
 
+    # Safety sync: ensure stage + assignment are persisted after final submit.
+    # This guarantees scrutiny queue pickup even if role mapping data was inconsistent.
+    scrutiny_role = db.query(Role).filter(Role.role_name == "SCRUTINY_OFFICER").first()
+    claim.current_stage = 2
+    claim.assigned_to_role_id = scrutiny_role.role_id if scrutiny_role else claim.assigned_to_role_id
+    db.commit()
+    db.refresh(claim)
 
     return claim
 
 
 def get_claim(db: Session, claim_id: UUID) -> Claim:
-    claim = db.query(Claim).filter(Claim.claim_id == claim_id).first()
+    claim = (
+        db.query(Claim)
+        .options(
+            joinedload(Claim.user),
+            joinedload(Claim.hospital),
+            joinedload(Claim.patient),
+        )
+        .filter(Claim.claim_id == claim_id)
+        .first()
+    )
     if not claim:
         raise HTTPException(status_code=404, detail="Claim not found")
     return claim
@@ -104,7 +121,16 @@ def get_claim(db: Session, claim_id: UUID) -> Claim:
 
 def get_my_claims(db: Session, user_id: UUID) -> list[Claim]:
     """Get all claims created by the current user."""
-    return db.query(Claim).filter(Claim.user_id == user_id).all()
+    return (
+        db.query(Claim)
+        .options(
+            joinedload(Claim.user),
+            joinedload(Claim.hospital),
+            joinedload(Claim.patient),
+        )
+        .filter(Claim.user_id == user_id)
+        .all()
+    )
 
 
 def update_claim(db: Session, claim_id: UUID, payload: ClaimCreate, user_id: UUID) -> Claim:

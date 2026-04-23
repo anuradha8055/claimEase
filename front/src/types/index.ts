@@ -59,8 +59,8 @@ export type ClaimStatus =
 export interface Claim {
   claim_id: string | number;
   user_id?: string;
-  employeeId?: number;
-  hospital_id?: number;
+  employeeId?: string | number;
+  hospital_id?: string | number;
   claim_number?: string;
   admission_date?: string;
   discharge_date?: string;
@@ -76,6 +76,17 @@ export interface Claim {
   last_updated_timestamp?: string;
   created_at?: string;
   updated_at?: string;
+  patient?: {
+    patientName?: string;
+    diagnosis?: string;
+  };
+  hospital?: {
+    hospital_id?: string;
+    hospitalName?: string;
+    hospitalType?: string;
+    admissionDate?: string;
+    dischargeDate?: string;
+  };
 }
 
 export interface Document {
@@ -172,4 +183,21 @@ export type HospitalCheckResponse = {
   is_empanelled: boolean;
   empanelment_tier: string | null;
   warning: string | null;
+};
+
+export type WorkflowHistoryResponse = {
+  log_id: string;
+  claim_id: string;
+  stage_id: number;
+  action_by: string;
+  remarks?: string | null;
+  created_at: string;
+};
+
+export type DDOSanctionedClaimResponse = {
+  claim_id: string;
+  claim_number: string;
+  approved_amount: number;
+  sanctioned_at: string | null;
+  status: ClaimStatus;
 };

@@ -12,6 +12,7 @@ from app.schemas.query_schema import QueryRaise, QueryResponse
 from app.services.workflow_service import transition
 
 router = APIRouter(prefix="/medical", tags=["Medical Officer"])
+MEDICAL_ROLE_ID = 3
 
 
 @router.get("/queue", response_model=list[ClaimResponse])
@@ -19,13 +20,22 @@ def get_queue(
     db:           Session = Depends(get_db),
     current_user: User    = Depends(get_current_medical_officer),
 ):
-    """All claims at SCRUTINY_APPROVED stage."""
-    return (
+    """Claims assigned to medical role_id=3."""
+    claims = (
         db.query(Claim)
-        .filter(Claim.current_stage == 3)
+        .filter(
+            (Claim.assigned_to_role_id == MEDICAL_ROLE_ID) |
+            ((Claim.assigned_to_role_id.is_(None)) & (Claim.current_stage == 3))
+        )
         .order_by(Claim.created_at.asc())
         .all()
     )
+    missing_assignment = [c for c in claims if c.assigned_to_role_id is None]
+    if missing_assignment:
+        for claim in missing_assignment:
+            claim.assigned_to_role_id = MEDICAL_ROLE_ID
+        db.commit()
+    return claims
 
 
 @router.get("/{claim_id}/hospital-check")

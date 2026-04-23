@@ -20,6 +20,7 @@ import type {
     DocumentResponse,
     QueryResponse
 } from '../types/index';
+import type { WorkflowHistoryResponse, DDOSanctionedClaimResponse } from '../types/index';
 
 export interface EmployeeProfileResponse {
     user_id: string;
@@ -217,5 +218,41 @@ export const calculateReimbursement = async (claimId: number, claimedAmount: num
         console.error('Error calculating reimbursement:', error);
         throw error;
     }
+};
+
+const getOfficerPrefix = (role: UserRole) => {
+    switch (role) {
+        case 'SCRUTINY_OFFICER':
+            return 'scrutiny';
+        case 'MEDICAL_OFFICER':
+            return 'medical';
+        case 'FINANCE_OFFICER':
+            return 'finance';
+        case 'DDO':
+            return 'ddo';
+        default:
+            throw new Error('Unsupported role for officer endpoints');
+    }
+};
+
+export const getOfficerQueue = async (role: UserRole): Promise<ClaimResponse[]> => {
+    const prefix = getOfficerPrefix(role);
+    const { data } = await api.get<ClaimResponse[]>(`/${prefix}/queue`);
+    return data;
+};
+
+export const getOfficerClaimDetails = async (claimId: string): Promise<ClaimResponse> => {
+    const { data } = await api.get<ClaimResponse>(`/claims/${claimId}`);
+    return data;
+};
+
+export const getClaimWorkflowHistory = async (claimId: string): Promise<WorkflowHistoryResponse[]> => {
+    const { data } = await api.get<WorkflowHistoryResponse[]>(`/claims/${claimId}/workflow-history`);
+    return data;
+};
+
+export const getDDOSanctionedClaims = async (): Promise<DDOSanctionedClaimResponse[]> => {
+    const { data } = await api.get<DDOSanctionedClaimResponse[]>('/ddo/sanctioned');
+    return data;
 };
 

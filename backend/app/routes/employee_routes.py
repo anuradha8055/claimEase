@@ -5,8 +5,10 @@ from app.config.database import get_db
 from app.core.dependencies import get_current_user, get_current_employee
 from app.models.user_model import User
 from app.schemas.claim_schema import ClaimCreate, ClaimResponse, ClaimStatusResponse
+from app.schemas.workflow_schema import WorkflowLogResponse
 from app.services import claim_service
 from app.models.claim_model import Claim 
+from app.models.logs_model import WorkflowLog
 
 router = APIRouter(prefix="/claims", tags=["Claims"])
 
@@ -86,3 +88,18 @@ def get_claim(
 ):
     """Get full claim details. Accessible by any authenticated user."""
     return claim_service.get_claim(db, claim_id)
+
+
+@router.get("/{claim_id}/workflow-history", response_model=list[WorkflowLogResponse])
+def get_claim_workflow_history(
+    claim_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Get real workflow history logs for a claim."""
+    return (
+        db.query(WorkflowLog)
+        .filter(WorkflowLog.claim_id == claim_id)
+        .order_by(WorkflowLog.created_at.asc())
+        .all()
+    )

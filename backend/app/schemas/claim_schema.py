@@ -64,6 +64,7 @@ class PatientDetailsResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 class HospitalDetailsResponse(BaseModel):
+    hospital_id: str
     hospitalName: str
     hospitalType: str
     hospitalAddress: Optional[str] = None
@@ -107,6 +108,20 @@ class ClaimResponse(ClaimBase):
     def claim_number(self) -> str:
         """Generate claim number from first 8 characters of UUID"""
         return str(self.claim_id)[:8].upper()
+
+    @computed_field  # type: ignore[misc]
+    @property
+    def employeeId(self) -> Optional[str]:
+        """Expose employee code for claim info card."""
+        user = getattr(self, "user", None)
+        return user.employeeId if user and getattr(user, "employeeId", None) else None
+
+    @computed_field  # type: ignore[misc]
+    @property
+    def hospital_id(self) -> Optional[str]:
+        """Expose hospital UUID linked to this claim."""
+        hospital = getattr(self, "hospital", None)
+        return str(hospital.hospital_id) if hospital and getattr(hospital, "hospital_id", None) else None
     
     @computed_field  # type: ignore[misc]
     @property

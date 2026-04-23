@@ -11,7 +11,8 @@ import {
   Claim, 
   Document, 
   HospitalCheckResponse, 
-  CalculationResponse 
+  CalculationResponse,
+  WorkflowHistoryResponse
 } from '../../types';
 import { 
   ArrowLeft, 
@@ -37,6 +38,8 @@ import {
 import { format, differenceInDays } from 'date-fns';
 import { motion, AnimatePresence } from 'framer-motion';;
 import toast from 'react-hot-toast';
+import { getClaimDocuments, getClaimWorkflowHistory, getDocumentViewUrl, getOfficerClaimDetails } from '../../api/mrs';
+import api from '../../api/axios';
 
 export const ClaimReviewPage: React.FC = () => {
   const { id } = useParams();
@@ -51,81 +54,87 @@ export const ClaimReviewPage: React.FC = () => {
   const [actionLoading, setActionLoading] = useState(false);
   const [showSanctionConfirm, setShowSanctionConfirm] = useState(false);
   const [showSuccessAnimation, setShowSuccessAnimation] = useState(false);
-  const [expandedDoc, setExpandedDoc] = useState<number | null>(null);
+  const [expandedDoc, setExpandedDoc] = useState<string | null>(null);
   const [actionType, setActionType] = useState<'APPROVE' | 'REJECT' | 'QUERY' | null>(null);
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
   const [showQueryModal, setShowQueryModal] = useState(false);
   const [queryText, setQueryText] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [openingDocId, setOpeningDocId] = useState<string | null>(null);
+  const [overrideAmount, setOverrideAmount] = useState<string>('');
+  const [overrideReason, setOverrideReason] = useState<string>('');
+  const [workflowHistory, setWorkflowHistory] = useState<WorkflowHistoryResponse[]>([]);
+
+  const safeDate = (value?: string | null) => {
+    if (!value) return null;
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? null : date;
+  };
+
+  const formatDate = (value?: string | null) => {
+    const date = safeDate(value);
+    return date ? format(date, 'MMM dd, yyyy') : '-';
+  };
+
+  const daysSince = (value?: string | null) => {
+    const date = safeDate(value);
+    return date ? differenceInDays(new Date(), date) : 0;
+  };
+
+  const handleViewDocument = async (documentId: string) => {
+    try {
+      setOpeningDocId(documentId);
+      const data = await getDocumentViewUrl(documentId);
+      window.open(data.url, '_blank', 'noopener,noreferrer');
+    } finally {
+      setOpeningDocId(null);
+    }
+  };
 
   useEffect(() => {
-    // Mock data fetching
     const fetchData = async () => {
+      if (!id) {
+        setLoading(false);
+        return;
+      }
+
       setLoading(true);
-      // Mock claim
-      const mockClaim: Claim = {
-        claim_id: Number(id),
-        employeeId: 10,
-        hospital_id: 601,
-        claim_number: 'CLM-2026-045',
-        admission_date: '2026-03-01',
-        discharge_date: '2026-03-05',
-        diagnosis: 'Cardiac Procedure',
-        total_bill_amount: 185000,
-        eligible_reimbursement_amount: user?.role === 'DDO' ? 165000 : null,
-        claim_status: 'SUBMITTED',
-        current_workflow_stage: 'SUBMITTED',
-        submission_timestamp: '2026-03-06T10:00:00Z',
-        last_updated_timestamp: '2026-03-15T10:00:00Z',
-      };
+      setError(null);
+      try {
+        const [claimData, documentData, workflowData] = await Promise.all([
+          getOfficerClaimDetails(id),
+          getClaimDocuments(id),
+          getClaimWorkflowHistory(id),
+        ]);
 
-      const mockDocs: Document[] = [
-        {
-          document_id: '1',
-          claim_id: String(id),
-          documentType: 'HOSPITAL_BILL',
-          fileName: 'HOSPITAL_BILL-001.pdf',
-          fileHash: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
-          fileSize: 1024 * 1024 * 2.5,
-          filePath: 'claims/' + id + '/hospital_bill_045.pdf',
-          is_tampered: false,
-          uploadTime: '2026-03-06T10:10:00Z',
-          ai_analysis: {
-            extracted_amount: 185000,
-            extracted_date: '2026-03-05',
-            summary: 'Final hospital bill for cardiac procedure. Includes room charges, surgery fees, and medications.',
-            potential_fraud_flags: [],
-            confidence_score: 0.98,
-            is_legible: true
-          }
+        setClaim(claimData);
+        setDocuments(documentData as unknown as Document[]);
+        setWorkflowHistory(workflowData);
+
+        if (user?.role === 'MEDICAL_OFFICER') {
+          const { data } = await api.get(`/medical/${id}/hospital-check`);
+          setHospitalCheck({
+            hospital_name: data.hospital_name,
+            is_empanelled: true,
+            empanelment_tier: data.hospital_type ?? null,
+            warning: null,
+          });
         }
-      ];
 
-      setClaim(mockClaim);
-      setDocuments(mockDocs);
-
-      if (user?.role === 'MEDICAL_OFFICER') {
-        setHospitalCheck({
-          hospital_name: 'City Heart Institute',
-          is_empanelled: true,
-          empanelment_tier: 'A',
-          warning: null
-        });
+        if (user?.role === 'FINANCE_OFFICER') {
+          const { data } = await api.get(`/finance/${id}/calculate`);
+          setCalculation({
+            system_calculated: data.system_calculated,
+            claimed_amount: data.claimed_amount,
+            breakdown: data.breakdown ?? [],
+          });
+        }
+      } catch {
+        setError('Unable to load claim details. Please refresh and try again.');
+      } finally {
+        setLoading(false);
       }
-
-      if (user?.role === 'FINANCE_OFFICER') {
-        setCalculation({
-          system_calculated: 165000,
-          claimed_amount: 185000,
-          breakdown: [
-            { rule: 'R101', category: 'Surgery', cap: 100000, applied_amount: 100000, approved_amount: 100000 },
-            { rule: 'R102', category: 'Ward Charges', cap: 5000, applied_amount: 20000, approved_amount: 5000 },
-            { rule: 'R103', category: 'Medicine', cap: 50000, applied_amount: 45000, approved_amount: 45000 },
-          ]
-        });
-      }
-
-      setLoading(false);
     };
 
     fetchData();
@@ -147,10 +156,49 @@ export const ClaimReviewPage: React.FC = () => {
     // }, 1500);
   // };
   const handleAction = async (action: 'APPROVE' | 'REJECT' | 'QUERY') => {
-  setActionLoading(true);
-  setActionType(action); // ✅ store which action
+  if (!id || !user?.role) {
+    return;
+  }
 
-  setTimeout(() => {
+  setActionLoading(true);
+  setActionType(action);
+  try {
+    if (user.role === 'SCRUTINY_OFFICER') {
+      if (action === 'APPROVE') await api.post(`/scrutiny/${id}/approve`);
+      if (action === 'REJECT') await api.post(`/scrutiny/${id}/reject`);
+      if (action === 'QUERY') await api.post(`/scrutiny/${id}/query`, { query_message: queryText });
+    }
+    if (user.role === 'MEDICAL_OFFICER') {
+      if (action === 'APPROVE') await api.post(`/medical/${id}/approve`);
+      if (action === 'REJECT') await api.post(`/medical/${id}/reject`);
+      if (action === 'QUERY') await api.post(`/medical/${id}/query`, { query_message: queryText });
+    }
+    if (user.role === 'FINANCE_OFFICER') {
+      if (action === 'APPROVE') {
+        const override = overrideAmount.trim() ? Number(overrideAmount) : null;
+        if (override !== null && (Number.isNaN(override) || override <= 0)) {
+          toast.error('Override amount must be a positive number');
+          setActionLoading(false);
+          return;
+        }
+        if (override !== null && !overrideReason.trim()) {
+          toast.error('Override reason is required when overriding amount');
+          setActionLoading(false);
+          return;
+        }
+
+        await api.post(`/finance/${id}/approve`, {
+          override_amount: override,
+          override_reason: override !== null ? overrideReason.trim() : null,
+        });
+      }
+      if (action === 'REJECT') await api.post(`/finance/${id}/reject`);
+    }
+    if (user.role === 'DDO') {
+      if (action === 'APPROVE') await api.post(`/ddo/${id}/sanction`);
+      if (action === 'REJECT') await api.post(`/ddo/${id}/reject`);
+    }
+
     setActionLoading(false);
     setShowSuccessAnimation(true);
 
@@ -164,9 +212,55 @@ export const ClaimReviewPage: React.FC = () => {
 
       navigate(`/${rolePrefix}/queue`);
     }, 1500);
-  }, 1500);
+  } catch {
+    setActionLoading(false);
+  }
 };
-  if (loading || !claim) return null;
+  if (loading) {
+    return (
+      <PageTransition>
+        <div className="p-8 text-text-secondary">Loading claim details...</div>
+      </PageTransition>
+    );
+  }
+
+  if (error || !claim) {
+    return (
+      <PageTransition>
+        <div className="p-8 space-y-4">
+          <p className="text-accent-red">{error || 'Claim not found.'}</p>
+          <GradientButton onClick={() => navigate(-1)}>Go Back</GradientButton>
+        </div>
+      </PageTransition>
+    );
+  }
+
+  const employeeCode = claim.employeeId
+    ? String(claim.employeeId)
+    : (claim.user_id ? String(claim.user_id).slice(0, 8).toUpperCase() : '-');
+  const hospitalIdDisplay = claim.hospital_id || claim.hospital?.hospital_id || '-';
+  const diagnosis = claim.diagnosis || claim.patient?.diagnosis || '-';
+  const admissionDate = claim.admission_date || claim.hospital?.admissionDate || null;
+  const dischargeDate = claim.discharge_date || claim.hospital?.dischargeDate || null;
+  const totalBillAmount = Number(claim.total_bill_amount ?? claim.totalBillAmount ?? 0);
+  const eligibleAmount = claim.eligible_reimbursement_amount ?? claim.approvedAmount ?? null;
+  const getWorkflowStatusLabel = (stageId: number, remarks?: string | null) => {
+    const note = (remarks || '').toLowerCase();
+    if (note.includes('query')) return 'QUERY RAISED';
+    if (note.includes('reject')) return 'REJECTED';
+    if (note.includes('payment')) return 'PAYMENT PROCESSED';
+
+    // workflow_logs.stage_id stores the stage at which action happened.
+    // UI should show the resulting stage after that action.
+    const nextStageLabel: Record<number, string> = {
+      1: 'SUBMITTED',
+      2: 'SCRUTINY APPROVED',
+      3: 'MEDICAL APPROVED',
+      4: 'FINANCE APPROVED',
+      5: 'DDO SANCTIONED',
+    };
+    return nextStageLabel[stageId] || `STAGE ${stageId}`;
+  };
 
   return (
     <PageTransition>
@@ -184,7 +278,7 @@ export const ClaimReviewPage: React.FC = () => {
               <div className="flex items-center gap-2 mt-1">
                 <StatusBadge status={claim.claim_status} />
                 <span className="px-2 py-0.5 rounded-full bg-white/5 text-text-muted text-[10px] font-bold border border-white/10">
-                  ⏱ {differenceInDays(new Date(), new Date(claim.last_updated_timestamp))} days since last update
+                  ⏱ {daysSince(claim.last_updated_timestamp)} days since last update
                 </span>
               </div>
             </div>
@@ -202,7 +296,7 @@ export const ClaimReviewPage: React.FC = () => {
                 </div>
                 <div className="text-right">
                   <p className="text-[10px] font-bold text-text-muted uppercase tracking-widest">Employee ID</p>
-                  <p className="text-sm text-text-primary font-bold">EMP-{claim.employeeId.toString().padStart(4, '0')}</p>
+                  <p className="text-sm text-text-primary font-bold">{employeeCode}</p>
                 </div>
               </div>
 
@@ -210,7 +304,7 @@ export const ClaimReviewPage: React.FC = () => {
                 <div>
                   <p className="text-[10px] font-bold text-text-muted uppercase tracking-widest">Hospital ID</p>
                   <div className="flex items-center gap-2 mt-1">
-                    <p className="text-sm text-text-primary font-medium">{claim.hospital_id}</p>
+                    <p className="text-sm text-text-primary font-medium">{hospitalIdDisplay}</p>
                     {hospitalCheck?.is_empanelled && (
                       <span className="px-1.5 py-0.5 rounded bg-accent-green/10 text-accent-green text-[8px] font-bold border border-accent-green/20">EMPANELLED</span>
                     )}
@@ -218,38 +312,42 @@ export const ClaimReviewPage: React.FC = () => {
                 </div>
                 <div>
                   <p className="text-[10px] font-bold text-text-muted uppercase tracking-widest">Diagnosis</p>
-                  <p className="text-sm text-text-primary font-medium">{claim.diagnosis}</p>
+                  <p className="text-sm text-text-primary font-medium">{diagnosis}</p>
                 </div>
                 <div>
                   <p className="text-[10px] font-bold text-text-muted uppercase tracking-widest">Stay Duration</p>
-                  <p className="text-sm text-text-primary font-medium">{differenceInDays(new Date(claim.discharge_date), new Date(claim.admission_date))} Days</p>
+                  <p className="text-sm text-text-primary font-medium">
+                    {safeDate(admissionDate) && safeDate(dischargeDate)
+                      ? `${differenceInDays(new Date(dischargeDate as string), new Date(admissionDate as string))} Days`
+                      : '-'}
+                  </p>
                 </div>
                 <div>
                   <p className="text-[10px] font-bold text-text-muted uppercase tracking-widest">Admission</p>
-                  <p className="text-sm text-text-primary font-medium">{format(new Date(claim.admission_date), 'MMM dd, yyyy')}</p>
+                  <p className="text-sm text-text-primary font-medium">{formatDate(admissionDate)}</p>
                 </div>
                 <div>
                   <p className="text-[10px] font-bold text-text-muted uppercase tracking-widest">Discharge</p>
-                  <p className="text-sm text-text-primary font-medium">{format(new Date(claim.discharge_date), 'MMM dd, yyyy')}</p>
+                  <p className="text-sm text-text-primary font-medium">{formatDate(dischargeDate)}</p>
                 </div>
                 <div>
                   <p className="text-[10px] font-bold text-text-muted uppercase tracking-widest">Submitted On</p>
-                  <p className="text-sm text-text-primary font-medium">{format(new Date(claim.submission_timestamp), 'MMM dd, yyyy')}</p>
+                  <p className="text-sm text-text-primary font-medium">{formatDate(claim.submission_timestamp)}</p>
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4 p-4 bg-white/5 rounded-2xl border border-white/5">
                 <div>
                   <p className="text-[10px] font-bold text-text-muted uppercase tracking-widest">Total Bill Amount</p>
-                  <p className="text-2xl font-bold text-white font-space">{formatCurrency(claim.total_bill_amount)}</p>
+                  <p className="text-2xl font-bold text-white font-space">{formatCurrency(totalBillAmount)}</p>
                 </div>
                 <div>
                   <p className="text-[10px] font-bold text-text-muted uppercase tracking-widest">Eligible Reimbursement</p>
                   <p className={cn(
                     "text-2xl font-bold font-space",
-                    claim.eligible_reimbursement_amount ? "text-accent-green" : "text-text-muted"
+                    eligibleAmount ? "text-accent-green" : "text-text-muted"
                   )}>
-                    {claim.eligible_reimbursement_amount ? formatCurrency(claim.eligible_reimbursement_amount) : 'Pending'}
+                    {eligibleAmount ? formatCurrency(eligibleAmount) : 'Pending'}
                   </p>
                 </div>
               </div>
@@ -272,13 +370,20 @@ export const ClaimReviewPage: React.FC = () => {
                         <p className="text-sm font-bold text-white truncate">{doc.fileName}</p>
                         <div className="flex items-center gap-2 mt-1">
                           <span className="text-[10px] font-mono text-text-muted bg-white/5 px-1.5 py-0.5 rounded">
-                            {doc.fileHash.substring(0, 20)}...
+                            {(doc.fileHash || '').substring(0, 20)}...
                           </span>
                           {!doc.is_tampered && (
                             <span className="px-2 py-0.5 rounded-full bg-accent-green/10 text-accent-green text-[8px] font-bold border border-accent-green/20">VERIFIED</span>
                           )}
                         </div>
                       </div>
+                      <button 
+                        onClick={() => handleViewDocument(doc.document_id)}
+                        disabled={openingDocId === doc.document_id}
+                        className="px-3 py-1.5 rounded-lg hover:bg-white/5 text-text-muted transition-colors text-xs border border-white/10"
+                      >
+                        {openingDocId === doc.document_id ? 'Opening...' : 'View'}
+                      </button>
                       <button 
                         onClick={() => setExpandedDoc(expandedDoc === doc.document_id ? null : doc.document_id)}
                         className="p-2 rounded-lg hover:bg-white/5 text-text-muted transition-colors"
@@ -445,7 +550,15 @@ export const ClaimReviewPage: React.FC = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
                   <div className="space-y-2">
                     <label className="text-[10px] font-bold text-text-muted uppercase tracking-widest">Override Amount (Optional)</label>
-                    <input type="number" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-text-primary focus:outline-none focus:border-accent-purple" placeholder="₹ 0.00" />
+                    <input
+                      type="number"
+                      value={overrideAmount}
+                      onChange={(e) => setOverrideAmount(e.target.value)}
+                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-text-primary focus:outline-none focus:border-accent-purple"
+                      placeholder="₹ 0.00"
+                      min="0"
+                      step="0.01"
+                    />
                   </div>
                   <div className="pt-6">
                  <GradientButton
@@ -461,7 +574,12 @@ export const ClaimReviewPage: React.FC = () => {
 </div>
                   <div className="space-y-2">
                     <label className="text-[10px] font-bold text-text-muted uppercase tracking-widest">Override Reason</label>
-                    <textarea className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-text-primary focus:outline-none focus:border-accent-purple h-[46px] resize-none" placeholder="Reason for override..." />
+                    <textarea
+                      value={overrideReason}
+                      onChange={(e) => setOverrideReason(e.target.value)}
+                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-text-primary focus:outline-none focus:border-accent-purple h-[46px] resize-none"
+                      placeholder="Reason for override..."
+                    />
                   </div>
                 </div>
               </GlassCard>
@@ -561,21 +679,27 @@ export const ClaimReviewPage: React.FC = () => {
               <div className="space-y-4">
                 <h3 className="text-xs font-bold text-text-muted uppercase tracking-widest px-2">Workflow History</h3>
                 <div className="space-y-0 relative before:absolute before:left-[11px] before:top-2 before:bottom-2 before:w-0.5 before:bg-white/5">
-                  {[
-                    { status: 'SUBMITTED', date: claim.submission_timestamp, user: 'Employee' },
-                    { status: 'SCRUTINY_APPROVED', date: '2026-03-10T14:00:00Z', user: 'Officer 102' },
-                    { status: 'MEDICAL_APPROVED', date: '2026-03-15T11:30:00Z', user: 'Officer 205' }
-                  ].map((log, i) => (
+                  {workflowHistory.map((log, i) => (
                     <div key={i} className="flex items-start gap-6 py-3 relative">
                       <div className="w-6 h-6 rounded-full border-4 border-primary-bg z-10 bg-accent-green flex items-center justify-center">
                         <Check size={12} className="text-white" />
                       </div>
                       <div>
-                        <p className="text-xs font-bold text-white">{log.status.replace('_', ' ')}</p>
-                        <p className="text-[10px] text-text-muted">{log.user} • {format(new Date(log.date), 'MMM dd, p')}</p>
+                        <p className="text-xs font-bold text-white">
+                          {getWorkflowStatusLabel(log.stage_id, log.remarks)}
+                        </p>
+                        <p className="text-[10px] text-text-muted">
+                          {String(log.action_by).slice(0, 8).toUpperCase()} • {safeDate(log.created_at) ? format(new Date(log.created_at), 'MMM dd, p') : '-'}
+                        </p>
+                        {log.remarks && (
+                          <p className="text-[10px] text-text-secondary mt-1">{log.remarks}</p>
+                        )}
                       </div>
                     </div>
                   ))}
+                  {workflowHistory.length === 0 && (
+                    <div className="py-3 px-2 text-[11px] text-text-muted">No workflow history available yet.</div>
+                  )}
                 </div>
               </div>
             </div>

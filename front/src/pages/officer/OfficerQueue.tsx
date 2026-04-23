@@ -19,6 +19,7 @@ import {
 import { differenceInDays } from 'date-fns';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
+import { getOfficerQueue } from '../../api/mrs';
 
 export const OfficerQueue: React.FC = () => {
   const { user } = useAuth();
@@ -43,44 +44,24 @@ export const OfficerQueue: React.FC = () => {
   };
 
   useEffect(() => {
-    // Mock data
-    const mockClaims: Claim[] = [
-      {
-        claim_id: 201,
-        employeeId: 10,
-        hospital_id: 601,
-        claim_number: 'CLM-2026-045',
-        // patient_name: 'Rahul Sharma',   // ✅ ADD THIS
-        admission_date: '2026-03-01',
-        discharge_date: '2026-03-05',
-        diagnosis: 'Cardiac Procedure',
-        total_bill_amount: 185000,
-        eligible_reimbursement_amount: null,
-        claim_status: 'SUBMITTED',
-        current_workflow_stage: 'SUBMITTED',
-        submission_timestamp: '2026-03-06T10:00:00Z',
-        last_updated_timestamp: '2026-03-15T10:00:00Z', // 10 days idle
-      },
-      {
-        claim_id: 202,
-        employeeId: 11,
-        hospital_id: 602,
-        claim_number: 'CLM-2026-048',
-        // patient_name: 'Sneha Patil',   // ✅ ADD THIS
-        admission_date: '2026-03-10',
-        discharge_date: '2026-03-12',
-        diagnosis: 'Maternity Care',
-        total_bill_amount: 55000,
-        eligible_reimbursement_amount: null,
-        claim_status: 'SUBMITTED',
-        current_workflow_stage: 'SUBMITTED',
-        submission_timestamp: '2026-03-13T10:00:00Z',
-        last_updated_timestamp: '2026-03-23T10:00:00Z', // 2 days idle
+    const loadQueue = async () => {
+      if (!user?.role || user.role === 'EMPLOYEE') {
+        setClaims([]);
+        setLoading(false);
+        return;
       }
-    ];
-    setClaims(mockClaims);
-    setLoading(false);
-  }, []);
+
+      setLoading(true);
+      try {
+        const queueClaims = await getOfficerQueue(user.role);
+        setClaims(queueClaims);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadQueue();
+  }, [user?.role]);
 
   const overdueClaims = claims.filter(c => differenceInDays(new Date(), new Date(c.last_updated_timestamp)) >= 5);
   const regularClaims = claims.filter(c => differenceInDays(new Date(), new Date(c.last_updated_timestamp)) < 5);
@@ -103,7 +84,16 @@ export const OfficerQueue: React.FC = () => {
               {claims.length} Pending
             </div>
             <button 
-              onClick={() => setLoading(true)}
+              onClick={async () => {
+                if (!user?.role || user.role === 'EMPLOYEE') return;
+                setLoading(true);
+                try {
+                  const queueClaims = await getOfficerQueue(user.role);
+                  setClaims(queueClaims);
+                } finally {
+                  setLoading(false);
+                }
+              }}
               className="p-2 rounded-xl bg-white/5 text-text-secondary hover:text-text-primary transition-all hover:rotate-180 duration-500"
             >
               <RefreshCw size={20} />
@@ -214,7 +204,7 @@ export const OfficerQueue: React.FC = () => {
                     </td>
                     <td className="px-6 py-4">
                       <p className="text-sm text-text-primary font-medium">
-                        {claim.patient_name}
+                        {claim.patient?.patientName || '-'}
                         </p>
                     </td>
 

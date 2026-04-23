@@ -5,24 +5,28 @@ import { StatusBadge } from '../../components/ui/StatusBadge';
 import { formatCurrency, cn } from '../../lib/utils';
 import { CheckCircle, IndianRupee, FileText, TrendingUp } from 'lucide-react';
 import { motion } from 'motion/react';
+import { format } from 'date-fns';
+import { getDDOSanctionedClaims } from '../../api/mrs';
+import type { DDOSanctionedClaimResponse } from '../../types';
 
 export const DDOSanctionedPage: React.FC = () => {
-  const [sanctionedClaims, setSanctionedClaims] = useState<any[]>([]);
+  const [sanctionedClaims, setSanctionedClaims] = useState<DDOSanctionedClaimResponse[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Mock data
-    const mockData = [
-      { claim_id: 301, claim_number: 'CLM-2026-012', eligible_amount: 125000, date: '2026-03-20' },
-      { claim_id: 302, claim_number: 'CLM-2026-015', eligible_amount: 45000, date: '2026-03-21' },
-      { claim_id: 303, claim_number: 'CLM-2026-018', eligible_amount: 85000, date: '2026-03-22' },
-      { claim_id: 304, claim_number: 'CLM-2026-022', eligible_amount: 210000, date: '2026-03-24' },
-    ];
-    setSanctionedClaims(mockData);
-    setLoading(false);
+    const loadSanctionedClaims = async () => {
+      setLoading(true);
+      try {
+        const data = await getDDOSanctionedClaims();
+        setSanctionedClaims(data);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadSanctionedClaims();
   }, []);
 
-  const totalDisbursed = sanctionedClaims.reduce((sum, c) => sum + c.eligible_amount, 0);
+  const totalDisbursed = sanctionedClaims.reduce((sum, c) => sum + c.approved_amount, 0);
 
   const stats = [
     { label: 'Total Sanctioned', value: sanctionedClaims.length, icon: CheckCircle, color: 'text-accent-green' },
@@ -71,6 +75,13 @@ export const DDOSanctionedPage: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
+                {!loading && sanctionedClaims.length === 0 && (
+                  <tr>
+                    <td className="px-6 py-8 text-text-muted text-sm" colSpan={4}>
+                      No sanctioned claims found.
+                    </td>
+                  </tr>
+                )}
                 {sanctionedClaims.map((claim, index) => (
                   <motion.tr
                     key={claim.claim_id}
@@ -83,13 +94,15 @@ export const DDOSanctionedPage: React.FC = () => {
                       <span className="font-mono text-xs text-accent-purple font-medium">{claim.claim_number}</span>
                     </td>
                     <td className="px-6 py-4">
-                      <p className="text-sm font-bold text-white">{formatCurrency(claim.eligible_amount)}</p>
+                      <p className="text-sm font-bold text-white">{formatCurrency(claim.approved_amount)}</p>
                     </td>
                     <td className="px-6 py-4">
-                      <p className="text-xs text-text-primary">{claim.date}</p>
+                      <p className="text-xs text-text-primary">
+                        {claim.sanctioned_at ? format(new Date(claim.sanctioned_at), 'MMM dd, yyyy') : '-'}
+                      </p>
                     </td>
                     <td className="px-6 py-4">
-                      <StatusBadge status="PAYMENT_PROCESSED" />
+                      <StatusBadge status={claim.status} />
                     </td>
                   </motion.tr>
                 ))}

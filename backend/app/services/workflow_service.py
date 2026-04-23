@@ -3,6 +3,7 @@ from fastapi import HTTPException, status
 from datetime import datetime
 from uuid import UUID
 from app.models.claim_model import Claim, ClaimStatus, CLAIM_TRANSITIONS
+from app.models.roles_model import Role
 from app.models.notifications_model import Notification
 import traceback
 
@@ -10,11 +11,17 @@ from app.models.logs_model import WorkflowLog
 
 class WorkflowService:
     @staticmethod
+    def _get_role_id_by_name(db: Session, role_name: str) -> int | None:
+        role = db.query(Role).filter(Role.role_name == role_name).first()
+        return role.role_id if role else None
+
+    @staticmethod
     def move_claim(
         db: Session, 
         claim_id: UUID, 
         current_user_id: UUID, 
         user_role_id: int, 
+        user_role_name: str | None,
         to_status: ClaimStatus, 
         remarks: str = None
     ):
@@ -31,24 +38,22 @@ class WorkflowService:
                     detail=f"Invalid transition from {claim.claim_status} to {to_status}"
                 )
 
-            # 3. Role-Based Access Control (RBAC) Logic
-            # Define which Role ID is responsible for which status
-            # (Assuming: 1: Employee, 2: Scrutiny, 3: Medical, 4: Finance, 5: DDO)
+            # 3. Role-Based Access Control (RBAC) using role names from DB/auth
             role_mapping = {
-                ClaimStatus.SUBMITTED: 1,         # Only Employee can submit
-                ClaimStatus.SCRUTINY_APPROVED: 2,  # Only Scrutiny can verify
-                ClaimStatus.QUERY_RAISED: [2, 3, 4, 5], # Any officer can raise query
-                ClaimStatus.MEDICAL_APPROVED: 3,   # Only Medical can approve amount
-                ClaimStatus.FINANCE_APPROVED: 4,   # Only Finance can verify funds
-                ClaimStatus.DDO_SANCTIONED: 5,     # Only DDO can give final sanction
-                ClaimStatus.PAYMENT_PROCESSED: 4   # Finance marks as paid
+                ClaimStatus.SUBMITTED: "EMPLOYEE",
+                ClaimStatus.SCRUTINY_APPROVED: "SCRUTINY_OFFICER",
+                ClaimStatus.QUERY_RAISED: ["SCRUTINY_OFFICER", "MEDICAL_OFFICER", "FINANCE_OFFICER", "DDO"],
+                ClaimStatus.MEDICAL_APPROVED: "MEDICAL_OFFICER",
+                ClaimStatus.FINANCE_APPROVED: "FINANCE_OFFICER",
+                ClaimStatus.DDO_SANCTIONED: "DDO",
+                ClaimStatus.PAYMENT_PROCESSED: "DDO",
             }
 
             required_role = role_mapping.get(to_status)
             if isinstance(required_role, list):
-                if user_role_id not in required_role:
+                if user_role_name not in required_role:
                     raise HTTPException(status_code=403, detail="Role not authorized for this action")
-            elif required_role and user_role_id != required_role:
+            elif required_role and user_role_name != required_role:
                 raise HTTPException(status_code=403, detail="Role not authorized for this action")
 
             # 4. Record the Audit Log
@@ -66,16 +71,34 @@ class WorkflowService:
             old_status = claim.claim_status
             claim.claim_status = to_status
             
-            # Logic to "Pass the ball" to the next role
-            next_role_map = {
-                ClaimStatus.SUBMITTED: 2,          # To Scrutiny
-                ClaimStatus.SCRUTINY_APPROVED: 3,   # To Medical
-                ClaimStatus.MEDICAL_APPROVED: 4,    # To Finance
-                ClaimStatus.FINANCE_APPROVED: 5,    # To DDO
-                ClaimStatus.DDO_SANCTIONED: 4,      # Back to Finance for payment
-                ClaimStatus.QUERY_RAISED: 1         # Back to Employee
+            # Explicit workflow handoff IDs as requested:
+            # SUBMITTED -> 2 (Scrutiny), SCRUTINY_APPROVED -> 3 (Medical),
+            # MEDICAL_APPROVED -> 4 (Finance), FINANCE_APPROVED -> 5 (DDO)
+            next_role_id_map = {
+                ClaimStatus.SUBMITTED: 2,
+                ClaimStatus.SCRUTINY_APPROVED: 3,
+                ClaimStatus.MEDICAL_APPROVED: 4,
+                ClaimStatus.FINANCE_APPROVED: 5,
+                ClaimStatus.DDO_SANCTIONED: 5,
+                ClaimStatus.PAYMENT_PROCESSED: None,
+                ClaimStatus.QUERY_RAISED: 1,
+                ClaimStatus.REJECTED: None,
             }
-            claim.assigned_to_role_id = next_role_map.get(to_status)
+            claim.assigned_to_role_id = next_role_id_map.get(to_status)
+
+            # Keep current_stage in sync with same officer pipeline IDs
+            next_stage_map = {
+                ClaimStatus.DRAFT: 1,
+                ClaimStatus.SUBMITTED: 2,
+                ClaimStatus.SCRUTINY_APPROVED: 3,
+                ClaimStatus.MEDICAL_APPROVED: 4,
+                ClaimStatus.FINANCE_APPROVED: 5,
+                ClaimStatus.DDO_SANCTIONED: 5,
+                ClaimStatus.PAYMENT_PROCESSED: 5,
+                ClaimStatus.QUERY_RAISED: 1,
+                ClaimStatus.REJECTED: 0,
+            }
+            claim.current_stage = next_stage_map.get(to_status, claim.current_stage)
 
             # 6. Generate Notification for the Employee
             # NOTE: Notification creation is optional and shouldn't fail the workflow
@@ -124,6 +147,7 @@ def transition(db: Session, claim_id: UUID, to_status: ClaimStatus, current_user
         claim_id=claim_id,
         current_user_id=current_user.user_id,
         user_role_id=current_user.role_id,
+        user_role_name=current_user.role.role_name if current_user.role else None,
         to_status=to_status,
         remarks=remarks
     )
