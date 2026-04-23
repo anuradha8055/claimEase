@@ -165,12 +165,12 @@ export const ClaimReviewPage: React.FC = () => {
   try {
     if (user.role === 'SCRUTINY_OFFICER') {
       if (action === 'APPROVE') await api.post(`/scrutiny/${id}/approve`);
-      if (action === 'REJECT') await api.post(`/scrutiny/${id}/reject`);
+      if (action === 'REJECT') await api.post(`/scrutiny/${id}/reject`, { reason: rejectReason.trim() });
       if (action === 'QUERY') await api.post(`/scrutiny/${id}/query`, { query_message: queryText });
     }
     if (user.role === 'MEDICAL_OFFICER') {
       if (action === 'APPROVE') await api.post(`/medical/${id}/approve`);
-      if (action === 'REJECT') await api.post(`/medical/${id}/reject`);
+      if (action === 'REJECT') await api.post(`/medical/${id}/reject`, { reason: rejectReason.trim() });
       if (action === 'QUERY') await api.post(`/medical/${id}/query`, { query_message: queryText });
     }
     if (user.role === 'FINANCE_OFFICER') {
@@ -192,11 +192,13 @@ export const ClaimReviewPage: React.FC = () => {
           override_reason: override !== null ? overrideReason.trim() : null,
         });
       }
-      if (action === 'REJECT') await api.post(`/finance/${id}/reject`);
+      if (action === 'REJECT') await api.post(`/finance/${id}/reject`, { reason: rejectReason.trim() });
+      if (action === 'QUERY') await api.post(`/finance/${id}/query`, { query_message: queryText });
     }
     if (user.role === 'DDO') {
       if (action === 'APPROVE') await api.post(`/ddo/${id}/sanction`);
-      if (action === 'REJECT') await api.post(`/ddo/${id}/reject`);
+      if (action === 'REJECT') await api.post(`/ddo/${id}/reject`, { reason: rejectReason.trim() });
+      if (action === 'QUERY') await api.post(`/ddo/${id}/query`, { query_message: queryText });
     }
 
     setActionLoading(false);
@@ -625,6 +627,9 @@ export const ClaimReviewPage: React.FC = () => {
                     <GradientButton variant="success" fullWidth className="gap-2" onClick={() => handleAction('APPROVE')}>
                       <IndianRupee size={18} /> Approve with Calculated Amount
                     </GradientButton>
+                    <GradientButton variant="outline" fullWidth className="gap-2 border-accent-amber/30 text-accent-amber hover:bg-accent-amber/5" onClick={() => setShowQueryModal(true)}>
+                      <MessageSquare size={18} /> Raise Query
+                    </GradientButton>
                     <GradientButton variant="outline" fullWidth className="gap-2 border-accent-red/30 text-accent-red hover:bg-accent-red/5" onClick={() =>setShowRejectModal(true)}>
                       <X size={18} /> Reject Claim
                     </GradientButton>
@@ -640,6 +645,9 @@ export const ClaimReviewPage: React.FC = () => {
                     
                     {!showSanctionConfirm ? (
                       <div className="space-y-2">
+                        <GradientButton variant="outline" fullWidth className="gap-2 border-accent-amber/30 text-accent-amber hover:bg-accent-amber/5" onClick={() => setShowQueryModal(true)}>
+                          <MessageSquare size={18} /> Raise Query
+                        </GradientButton>
                         <GradientButton
   variant="outline"
   fullWidth

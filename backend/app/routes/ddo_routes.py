@@ -6,6 +6,8 @@ from app.core.dependencies import get_current_ddo
 from app.models.user_model import User
 from app.models.claim_model import Claim, ClaimStatus
 from app.schemas.claim_schema import ClaimResponse
+from app.schemas.query_schema import QueryRaise, QueryResponse, RejectReason
+from app.services.query_notification_service import log_query_and_notify_employee
 from app.services.workflow_service import transition
 
 router = APIRouter(prefix="/ddo", tags=["DDO"])
@@ -68,16 +70,52 @@ def sanction(
 @router.post("/{claim_id}/reject", response_model=ClaimResponse)
 def reject(
     claim_id: UUID,
+    payload: RejectReason,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_ddo),
 ):
     """DDO rejects the claim."""
-    return transition(
+    claim = transition(
         db, claim_id,
         ClaimStatus.REJECTED,
         current_user,
-        remarks="Rejected at DDO stage"
+        remarks=f"Rejected at DDO stage: {payload.reason}"
     )
+    log_query_and_notify_employee(
+        db,
+        claim_id=claim_id,
+        raised_by_user_id=current_user.user_id,
+        raised_stage=5,
+        message=payload.reason,
+        event_type="REJECTION",
+    )
+    db.commit()
+    return claim
+
+
+@router.post("/{claim_id}/query", response_model=QueryResponse, status_code=201)
+def raise_query(
+    claim_id: UUID,
+    payload: QueryRaise,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_ddo),
+):
+    """DDO raises a query — claim returns to employee."""
+    transition(
+        db, claim_id, ClaimStatus.QUERY_RAISED, current_user,
+        remarks=f"DDO query: {payload.query_message}"
+    )
+    query = log_query_and_notify_employee(
+        db,
+        claim_id=claim_id,
+        raised_by_user_id=current_user.user_id,
+        raised_stage=5,
+        message=payload.query_message,
+        event_type="QUERY",
+    )
+    db.commit()
+    db.refresh(query)
+    return query
 
 
 @router.get("/sanctioned")

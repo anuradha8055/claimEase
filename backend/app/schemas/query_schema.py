@@ -4,9 +4,11 @@ from pydantic import BaseModel, ConfigDict
 from uuid import UUID
 
 class QueryRaise(BaseModel):
-    claim_id:     int
     query_message: str
-    raised_stage: str
+
+
+class RejectReason(BaseModel):
+    reason: str
 
 
 class QueryRespond(BaseModel):

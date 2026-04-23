@@ -10,6 +10,8 @@ from app.models.user_model import User
 from app.models.claim_model import Claim, ClaimStatus
 from app.models.hospitals_model import HospitalDetails
 from app.schemas.claim_schema import ClaimResponse
+from app.schemas.query_schema import QueryRaise, QueryResponse, RejectReason
+from app.services.query_notification_service import log_query_and_notify_employee
 from app.services.workflow_service import transition
 
 router = APIRouter(prefix="/finance", tags=["Finance Officer"])
@@ -114,8 +116,46 @@ def approve(
 @router.post("/{claim_id}/reject", response_model=ClaimResponse)
 def reject(
     claim_id: UUID,
+    payload: RejectReason,
     db:           Session = Depends(get_db),
     current_user: User    = Depends(get_current_finance_officer),
 ):
-    return transition(db, claim_id, ClaimStatus.REJECTED, current_user,
-                      remarks="Rejected at finance stage")
+    claim = transition(
+        db, claim_id, ClaimStatus.REJECTED, current_user,
+        remarks=f"Rejected at finance stage: {payload.reason}"
+    )
+    log_query_and_notify_employee(
+        db,
+        claim_id=claim_id,
+        raised_by_user_id=current_user.user_id,
+        raised_stage=4,
+        message=payload.reason,
+        event_type="REJECTION",
+    )
+    db.commit()
+    return claim
+
+
+@router.post("/{claim_id}/query", response_model=QueryResponse, status_code=201)
+def raise_query(
+    claim_id: UUID,
+    payload: QueryRaise,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_finance_officer),
+):
+    """Finance officer raises a query — claim returns to employee."""
+    transition(
+        db, claim_id, ClaimStatus.QUERY_RAISED, current_user,
+        remarks=f"Finance query: {payload.query_message}"
+    )
+    query = log_query_and_notify_employee(
+        db,
+        claim_id=claim_id,
+        raised_by_user_id=current_user.user_id,
+        raised_stage=4,
+        message=payload.query_message,
+        event_type="QUERY",
+    )
+    db.commit()
+    db.refresh(query)
+    return query

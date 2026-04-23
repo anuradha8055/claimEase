@@ -6,9 +6,9 @@ from app.core.dependencies import get_current_medical_officer
 from app.models.user_model import User
 from app.models.claim_model import Claim, ClaimStatus
 from app.models.hospitals_model import HospitalDetails
-from app.models.query_model import Query
 from app.schemas.claim_schema import ClaimResponse
-from app.schemas.query_schema import QueryRaise, QueryResponse
+from app.schemas.query_schema import QueryRaise, QueryResponse, RejectReason
+from app.services.query_notification_service import log_query_and_notify_employee
 from app.services.workflow_service import transition
 
 router = APIRouter(prefix="/medical", tags=["Medical Officer"])
@@ -90,15 +90,14 @@ def raise_query(
     transition(db, claim_id, ClaimStatus.QUERY_RAISED, current_user,
                remarks=f"Medical query: {payload.query_message}")
 
-    query = Query(
-        query_id      = None,
-        claim_id      = claim_id,
-        raised_by     = current_user.user_id,
-        raised_stage  = 3,
-        query_text = payload.query_message,
-        status        = "PENDING",
+    query = log_query_and_notify_employee(
+        db,
+        claim_id=claim_id,
+        raised_by_user_id=current_user.user_id,
+        raised_stage=3,
+        message=payload.query_message,
+        event_type="QUERY",
     )
-    db.add(query)
     db.commit()
     db.refresh(query)
     return query
@@ -107,8 +106,21 @@ def raise_query(
 @router.post("/{claim_id}/reject", response_model=ClaimResponse)
 def reject(
     claim_id: UUID,
+    payload: RejectReason,
     db:           Session = Depends(get_db),
     current_user: User    = Depends(get_current_medical_officer),
 ):
-    return transition(db, claim_id, ClaimStatus.REJECTED, current_user,
-                      remarks="Rejected at medical review stage")
+    claim = transition(
+        db, claim_id, ClaimStatus.REJECTED, current_user,
+        remarks=f"Rejected at medical review stage: {payload.reason}"
+    )
+    log_query_and_notify_employee(
+        db,
+        claim_id=claim_id,
+        raised_by_user_id=current_user.user_id,
+        raised_stage=3,
+        message=payload.reason,
+        event_type="REJECTION",
+    )
+    db.commit()
+    return claim
